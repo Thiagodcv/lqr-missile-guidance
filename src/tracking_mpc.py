@@ -120,4 +120,7 @@ def generate_nom_traj(bc, fe, th, dt):
     nom_traj[:, 4] = th * np.ones(N)
     nom_traj[:, 5] = np.zeros(N)
 
-    return nom_traj
+    inpt_traj = np.zeros((N, 3))
+    inpt_traj[:, 0] = fe * np.ones(N)
+
+    return nom_traj, inpt_traj
