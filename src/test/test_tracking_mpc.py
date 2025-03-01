@@ -1,6 +1,6 @@
 from unittest import TestCase
 import numpy as np
-from src.tracking_mpc import nom_traj_params
+from src.tracking_mpc import nom_traj_params, generate_nom_traj
 from src.constants import MASS, GRAVITY
 
 
@@ -51,3 +51,34 @@ class TestMPPI(TestCase):
         print("F_E: ", sol[0])
         print("th: ", sol[1])
         print(fun(sol))
+
+    def test_generate_nom_traj(self):
+        bc = {'x0': 0.,
+              'x_dot0': 0.,
+              'z0': 0.,
+              'z_dot0': 0.,
+              'T': 1.,
+              'xT': 1000.,  # travel 1400m in one second
+              'zT': 1000.}
+
+        m = MASS
+        g = GRAVITY
+        T = bc['T']
+
+        fe, th = nom_traj_params(bc)
+        dt = 0.01
+        nom_traj = generate_nom_traj(bc, fe, th, dt)
+
+        tol = 1e-6
+        self.assertTrue(nom_traj.shape == (101, 6))
+        self.assertTrue(np.abs(nom_traj[0, 0] - bc['x0']) < tol)
+        self.assertTrue(np.abs(nom_traj[0, 1] - bc['x_dot0']) < tol)
+        self.assertTrue(np.abs(nom_traj[0, 2] - bc['z0']) < tol)
+        self.assertTrue(np.abs(nom_traj[0, 3] - bc['z_dot0']) < tol)
+        self.assertTrue(np.abs(nom_traj[0, 4] - th) < tol)
+        self.assertTrue(np.abs(nom_traj[0, 5] - 0.) < tol)
+        self.assertTrue(np.abs(nom_traj[-1, 0] - bc['xT']) < tol)
+        self.assertTrue(np.abs(nom_traj[-1, 2] - bc['zT']) < tol)
+        self.assertTrue(np.abs(nom_traj[-1, 4] - th) < tol)
+        self.assertTrue(np.abs(nom_traj[-1, 5] - 0.) < tol)
+        print(nom_traj)

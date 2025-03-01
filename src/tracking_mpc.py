@@ -104,13 +104,13 @@ def generate_nom_traj(bc, fe, th, dt):
     m = const.MASS
     g = const.GRAVITY
     T = bc['T']
-    x = lambda t: 1/(2*m)*fe*np.sin(th)*t**2 + bc['x_dot0']*t + bc['x0'] - bc['xT']
-    z = lambda t: 1/2*(1/m*fe*np.cos(th) - g)*t**2 + bc['z_dot0']*t + bc['z0'] - bc['zT']
+    x = lambda t: 1/(2*m)*fe*np.sin(th)*t**2 + bc['x_dot0']*t + bc['x0']
+    z = lambda t: 1/2*(1/m*fe*np.cos(th) - g)*t**2 + bc['z_dot0']*t + bc['z0']
     x_dot = lambda t: 1/m*fe*np.sin(th)*t + bc['x_dot0']
     z_dot = lambda t: (1/m*fe*np.cos(th) - g)*t + bc['z_dot0']
 
-    N = np.floor(T/dt) + 1
-    nom_traj = np.zeros((N, 5))
+    N = int(np.floor(T/dt) + 1)
+    nom_traj = np.zeros((N, 6))
     t_vals = np.arange(0, T+dt, dt)
 
     nom_traj[:, 0] = x(t_vals)
@@ -121,4 +121,3 @@ def generate_nom_traj(bc, fe, th, dt):
     nom_traj[:, 5] = np.zeros(N)
 
     return nom_traj
-    
