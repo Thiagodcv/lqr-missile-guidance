@@ -94,9 +94,9 @@ class TestTrackingMPC(TestCase):
             return x + u
 
         nom_s = np.array([0., 2., 3., 7., 12.])[:, None]
-        nom_u = np.array([2., 1., 4., 5.])[:, None]
+        nom_u = np.array([2., 1, 4, 5.])[:, None]
 
-        Q = np.array([2.])
+        Q = np.array([1.])
         R = np.array([1.])
         dt = 0.1
         N = 3
@@ -104,5 +104,11 @@ class TestTrackingMPC(TestCase):
         mpc = TrackingMPC(f=f, Q=Q, R=R, dt=dt, N=N, nom_s=nom_s, nom_u=nom_u)
 
         # Run simulation
-        u = mpc.run(np.array([0.]), full=True)
-        print("Optimal control input: ", u)
+        state = np.array([0.])
+        inpts = []
+        for n in range(4):
+            u = mpc.run(state, full=False)
+            state = f(state, u)
+            inpts.append(u)
+
+        print("Optimal control inputs: ", inpts)

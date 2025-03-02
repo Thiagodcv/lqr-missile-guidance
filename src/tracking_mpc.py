@@ -57,7 +57,7 @@ class TrackingMPC:
 
         # Compute cost
         cost = 0
-        N = min(self.nom_s.shape[0] - self.curr_idx - 1, self.N)
+        N = min(self.nom_s.shape[0] - self.curr_idx - 1, self.N)  # Number of timesteps (including final)
         for n in range(N+1):
             s_ref = self.nom_s[self.curr_idx + n, :]
             cost += ca.mtimes([(s[n, :] - s_ref).T, self.Q, (s[n, :] - s_ref)])
@@ -69,13 +69,16 @@ class TrackingMPC:
         if u_bounds is not None:
             u_lb = u_bounds["u_lb"]
             u_ub = u_bounds["u_ub"]
+
         opti.subject_to(s[0, :] == s_init)
         for n in range(N):
             opti.subject_to(s[n+1, :] == self.f(s[n, :], u[n, :]))
+
             if u_bounds is not None:
                 opti.subject_to(u_lb <= u[n, :])
                 opti.subject_to(u[n, :] <= u_ub)
 
+        opti.minimize(cost)
         opti.solver("ipopt")
         sol = opti.solve()
 
