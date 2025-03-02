@@ -73,7 +73,7 @@ def f(s, u):
     phi = u[2]
 
     # Other constants.
-    m = const.GRAVITY
+    m = const.MASS
     inert_tensr = m  # TODO: Figure out the correct expression for the inertia tensor
     g = const.GRAVITY
     l1 = const.L1
@@ -82,7 +82,7 @@ def f(s, u):
     # alpha = const.ALPHA
     # beta = const.BETA
 
-    s_dot = np.zeros(7)
+    s_dot = np.zeros(6)
     s_dot[0] = x_dot
     s_dot[1] = 1/m * (f_e * np.sin(phi + theta) + f_s * np.cos(theta))
     s_dot[2] = z_dot

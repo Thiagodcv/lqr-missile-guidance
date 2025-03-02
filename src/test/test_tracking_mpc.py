@@ -4,7 +4,7 @@ from src.tracking_mpc import nom_traj_params, generate_nom_traj
 from src.constants import MASS, GRAVITY
 
 
-class TestMPPI(TestCase):
+class TestTrackingMPC(TestCase):
 
     def setUp(self):
         pass
