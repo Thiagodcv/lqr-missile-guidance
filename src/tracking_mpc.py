@@ -10,7 +10,7 @@ class TrackingMPC:
     trajectory at each time step t.
     """
 
-    def __init__(self, f, Q, R, dt, N, nom_s, nom_inpt):
+    def __init__(self, f, Q, R, dt, N, nom_s, nom_u):
         """
         Parameters:
         ----------
@@ -23,11 +23,11 @@ class TrackingMPC:
         dt : float
             The interval length between discrete consecutive timesteps.
         N : int
-            The number of timesteps to optimize over.
+            The number of timesteps to optimize over (including current state).
         nom_s : ndarray
-            An (N+1, :) array containing the state reference trajectory.
-        nom_inpt : ndarray
-            An (N, :) array containing the input reference trajectory.
+            A (K+1, :) array containing the state reference trajectory.
+        nom_u : ndarray
+            A (K, :) array containing the input reference trajectory.
         """
         self.f = f
         self.Q = Q
@@ -37,12 +37,12 @@ class TrackingMPC:
         self.nx = Q.shape[0]
         self.nu = R.shape[0]
         self.nom_s = nom_s
-        self.nom_inpt = nom_inpt
+        self.nom_u = nom_u
 
         # The current index to start tracking the nominal trajectory from.
         self.curr_idx = 0
 
-    def run(self, s_init, u_bounds):
+    def run(self, s_init, u_bounds=None, full=False):
         """
         Parameters:
         ----------
@@ -62,24 +62,30 @@ class TrackingMPC:
             s_ref = self.nom_s[self.curr_idx + n, :]
             cost += ca.mtimes([(s[n, :] - s_ref).T, self.Q, (s[n, :] - s_ref)])
             if n < N:
-                u_ref = self.nom_s[self.curr_idx + n, :]
+                u_ref = self.nom_u[self.curr_idx + n, :]
                 cost += ca.mtimes([(u[n, :] - u_ref).T, self.R, (u[n, :] - u_ref)])
 
         # Impose constraints
-        u_lb = u_bounds["u_lb"]
-        u_ub = u_bounds["u_ub"]
+        if u_bounds is not None:
+            u_lb = u_bounds["u_lb"]
+            u_ub = u_bounds["u_ub"]
         opti.subject_to(s[0, :] == s_init)
         for n in range(N):
             opti.subject_to(s[n+1, :] == self.f(s[n, :], u[n, :]))
-            opti.subject_to(u_lb <= u[n, :])
-            opti.subject_to(u[n, :] <= u_ub)
+            if u_bounds is not None:
+                opti.subject_to(u_lb <= u[n, :])
+                opti.subject_to(u[n, :] <= u_ub)
 
         opti.solver("ipopt")
         sol = opti.solve()
 
         # Update nominal trajectory index
         self.curr_idx += 1
-        return sol.value(u[0, :])
+
+        if full:
+            return sol.value(u)
+        else:
+            return sol.value(u[0, :])
 
 
 def nom_traj_params(bc):

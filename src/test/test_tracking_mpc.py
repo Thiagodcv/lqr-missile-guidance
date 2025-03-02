@@ -1,6 +1,6 @@
 from unittest import TestCase
 import numpy as np
-from src.tracking_mpc import nom_traj_params, generate_nom_traj
+from src.tracking_mpc import nom_traj_params, generate_nom_traj, TrackingMPC
 from src.constants import MASS, GRAVITY
 
 
@@ -88,3 +88,21 @@ class TestTrackingMPC(TestCase):
         self.assertTrue(np.linalg.norm(inpt_traj[:, 1] - np.zeros(101)) < tol)
         self.assertTrue(np.linalg.norm(inpt_traj[:, 2] - np.zeros(101)) < tol)
         print(inpt_traj)
+
+    def test_run_tracking_mpc(self):
+        def f(x, u):
+            return x + u
+
+        nom_s = np.array([0., 2., 3., 7., 12.])[:, None]
+        nom_u = np.array([2., 1., 4., 5.])[:, None]
+
+        Q = np.array([2.])
+        R = np.array([1.])
+        dt = 0.1
+        N = 3
+
+        mpc = TrackingMPC(f=f, Q=Q, R=R, dt=dt, N=N, nom_s=nom_s, nom_u=nom_u)
+
+        # Run simulation
+        u = mpc.run(np.array([0.]), full=True)
+        print("Optimal control input: ", u)
