@@ -4,7 +4,7 @@ from src.tracking_mpc import nom_traj_params, generate_nom_traj
 from src.constants import MASS, GRAVITY
 
 
-class TestMPPI(TestCase):
+class TestTrackingMPC(TestCase):
 
     def setUp(self):
         pass
@@ -67,7 +67,7 @@ class TestMPPI(TestCase):
 
         fe, th = nom_traj_params(bc)
         dt = 0.01
-        nom_traj = generate_nom_traj(bc, fe, th, dt)
+        nom_traj, inpt_traj = generate_nom_traj(bc, fe, th, dt)
 
         tol = 1e-6
         self.assertTrue(nom_traj.shape == (101, 6))
@@ -82,3 +82,9 @@ class TestMPPI(TestCase):
         self.assertTrue(np.abs(nom_traj[-1, 4] - th) < tol)
         self.assertTrue(np.abs(nom_traj[-1, 5] - 0.) < tol)
         print(nom_traj)
+
+        self.assertTrue(inpt_traj.shape == (101, 3))
+        self.assertTrue(np.linalg.norm(inpt_traj[:, 0] - fe*np.ones(101)) < tol)
+        self.assertTrue(np.linalg.norm(inpt_traj[:, 1] - np.zeros(101)) < tol)
+        self.assertTrue(np.linalg.norm(inpt_traj[:, 2] - np.zeros(101)) < tol)
+        print(inpt_traj)
