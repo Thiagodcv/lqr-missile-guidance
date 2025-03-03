@@ -139,7 +139,9 @@ class TestTrackingMPC(TestCase):
         Q[4, 4] = 50
         R = np.identity(3)
         R[0, 0] = 10
-        N = 5
+        R[0, 0] = 100
+        R[0, 0] = 100
+        N = 20
 
         mpc = TrackingMPC(f=f_casadi, Q=Q, R=R, dt=dt, N=N, nom_s=nom_s, nom_u=nom_u)
 
