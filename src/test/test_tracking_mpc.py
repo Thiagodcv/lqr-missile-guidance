@@ -2,6 +2,7 @@ from unittest import TestCase
 import numpy as np
 from src.tracking_mpc import nom_traj_params, generate_nom_traj, TrackingMPC
 from src.constants import MASS, GRAVITY
+from src.dynamics import MissileEnv, f
 
 
 class TestTrackingMPC(TestCase):
@@ -112,3 +113,44 @@ class TestTrackingMPC(TestCase):
             inpts.append(u)
 
         print("Optimal control inputs: ", inpts)
+
+    def test_tracking_mpc_missile(self):
+        """
+        Tests tracking MPC applied to the 2D rocket.
+        """
+        bc = {'x0': 0.,
+              'x_dot0': 0.,
+              'z0': 0.,
+              'z_dot0': 0.,
+              'T': 1.,
+              'xT': 1000.,  # travel 1400m in one second
+              'zT': 1000.}
+        T = bc['T']
+
+        fe, th = nom_traj_params(bc)
+        dt = 0.01
+        nom_s, nom_u = generate_nom_traj(bc, fe, th, dt)
+
+        Q = np.identity(6)
+        R = np.identity(3)
+        N = 15
+
+        mpc = TrackingMPC(f=f, Q=Q, R=R, dt=dt, N=N, nom_s=nom_s, nom_u=nom_u)
+
+        # Construct environment
+        targ = np.array([bc['xT'], bc['zT']])
+        init_state = np.zeros(6)
+        env = MissileEnv(init_state=init_state, target=targ, dt=dt)
+
+        K = int(T / dt)
+        t = 0
+        state = init_state
+        for k in range(K):
+            u = mpc.run(state)
+            state, t, targ_hit = env.step(u)
+            print("state: ", state)
+            print("ref state: ", nom_s[k, :])
+            print("u: ", u)
+            print("ref u: ", nom_u[k, :])
+            print("t: ", t)
+            print("============================")
