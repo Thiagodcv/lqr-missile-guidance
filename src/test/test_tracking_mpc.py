@@ -136,7 +136,7 @@ class TestTrackingMPC(TestCase):
         Q = np.zeros((6, 6))
         Q[0, 0] = 10
         Q[2, 2] = 10
-        Q[4, 4] = 50
+        Q[4, 4] = 200
         R = np.identity(3)
         R[0, 0] = 10
         R[0, 0] = 100
