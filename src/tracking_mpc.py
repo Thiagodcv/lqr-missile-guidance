@@ -80,7 +80,8 @@ class TrackingMPC:
                 opti.subject_to(u[:, n] <= u_ub)
 
         opti.minimize(cost)
-        opti.solver("ipopt")
+        opts = {'ipopt.print_level': 0, 'print_time': 0}
+        opti.solver("ipopt", opts)
         sol = opti.solve()
 
         # Update nominal trajectory index
