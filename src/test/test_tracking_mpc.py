@@ -2,7 +2,7 @@ from unittest import TestCase
 import numpy as np
 from src.tracking_mpc import nom_traj_params, generate_nom_traj, TrackingMPC
 from src.constants import MASS, GRAVITY
-from src.dynamics import MissileEnv, f
+from src.dynamics import MissileEnv, f_casadi
 
 
 class TestTrackingMPC(TestCase):
@@ -71,23 +71,23 @@ class TestTrackingMPC(TestCase):
         nom_traj, inpt_traj = generate_nom_traj(bc, fe, th, dt)
 
         tol = 1e-6
-        self.assertTrue(nom_traj.shape == (101, 6))
+        self.assertTrue(nom_traj.shape == (6, 101))
         self.assertTrue(np.abs(nom_traj[0, 0] - bc['x0']) < tol)
-        self.assertTrue(np.abs(nom_traj[0, 1] - bc['x_dot0']) < tol)
-        self.assertTrue(np.abs(nom_traj[0, 2] - bc['z0']) < tol)
-        self.assertTrue(np.abs(nom_traj[0, 3] - bc['z_dot0']) < tol)
-        self.assertTrue(np.abs(nom_traj[0, 4] - th) < tol)
-        self.assertTrue(np.abs(nom_traj[0, 5] - 0.) < tol)
-        self.assertTrue(np.abs(nom_traj[-1, 0] - bc['xT']) < tol)
-        self.assertTrue(np.abs(nom_traj[-1, 2] - bc['zT']) < tol)
-        self.assertTrue(np.abs(nom_traj[-1, 4] - th) < tol)
-        self.assertTrue(np.abs(nom_traj[-1, 5] - 0.) < tol)
+        self.assertTrue(np.abs(nom_traj[1, 0] - bc['x_dot0']) < tol)
+        self.assertTrue(np.abs(nom_traj[2, 0] - bc['z0']) < tol)
+        self.assertTrue(np.abs(nom_traj[3, 0] - bc['z_dot0']) < tol)
+        self.assertTrue(np.abs(nom_traj[4, 0] - th) < tol)
+        self.assertTrue(np.abs(nom_traj[5, 0] - 0.) < tol)
+        self.assertTrue(np.abs(nom_traj[0, -1] - bc['xT']) < tol)
+        self.assertTrue(np.abs(nom_traj[2, -1] - bc['zT']) < tol)
+        self.assertTrue(np.abs(nom_traj[4, -1] - th) < tol)
+        self.assertTrue(np.abs(nom_traj[5, -1] - 0.) < tol)
         print(nom_traj)
 
-        self.assertTrue(inpt_traj.shape == (101, 3))
-        self.assertTrue(np.linalg.norm(inpt_traj[:, 0] - fe*np.ones(101)) < tol)
-        self.assertTrue(np.linalg.norm(inpt_traj[:, 1] - np.zeros(101)) < tol)
-        self.assertTrue(np.linalg.norm(inpt_traj[:, 2] - np.zeros(101)) < tol)
+        self.assertTrue(inpt_traj.shape == (3, 101))
+        self.assertTrue(np.linalg.norm(inpt_traj[0, :] - fe*np.ones(101)) < tol)
+        self.assertTrue(np.linalg.norm(inpt_traj[1, :] - np.zeros(101)) < tol)
+        self.assertTrue(np.linalg.norm(inpt_traj[2, :] - np.zeros(101)) < tol)
         print(inpt_traj)
 
     def test_run_tracking_mpc(self):
@@ -133,13 +133,14 @@ class TestTrackingMPC(TestCase):
 
         Q = np.identity(6)
         R = np.identity(3)
-        N = 15
+        N = 10
 
-        mpc = TrackingMPC(f=f, Q=Q, R=R, dt=dt, N=N, nom_s=nom_s, nom_u=nom_u)
+        mpc = TrackingMPC(f=f_casadi, Q=Q, R=R, dt=dt, N=N, nom_s=nom_s, nom_u=nom_u)
 
         # Construct environment
         targ = np.array([bc['xT'], bc['zT']])
-        init_state = np.zeros(6)
+        # init_state = np.zeros(6)
+        init_state = nom_s[:, 0]
         env = MissileEnv(init_state=init_state, target=targ, dt=dt)
 
         K = int(T / dt)
@@ -147,10 +148,13 @@ class TestTrackingMPC(TestCase):
         state = init_state
         for k in range(K):
             u = mpc.run(state)
-            state, t, targ_hit = env.step(u)
+
             print("state: ", state)
-            print("ref state: ", nom_s[k, :])
-            print("u: ", u)
-            print("ref u: ", nom_u[k, :])
+            print("ref state: ", nom_s[:, k])
             print("t: ", t)
+            print("k: ", k)
+            print("u: ", u)
+            print("ref u: ", nom_u[:, k])
             print("============================")
+
+            state, t, targ_hit = env.step(u)
