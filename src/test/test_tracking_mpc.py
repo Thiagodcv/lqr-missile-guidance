@@ -94,8 +94,8 @@ class TestTrackingMPC(TestCase):
         def f(x, u):
             return x + u
 
-        nom_s = np.array([0., 2., 3., 7., 12.])[:, None]
-        nom_u = np.array([2., 1, 4, 5.])[:, None]
+        nom_s = np.array([0., 2., 3., 7., 12.])[None, :]
+        nom_u = np.array([2., 1, 4, 5.])[None, :]
 
         Q = np.array([1.])
         R = np.array([1.])
@@ -113,6 +113,8 @@ class TestTrackingMPC(TestCase):
             inpts.append(u)
 
         print("Optimal control inputs: ", inpts)
+        tol = 1e-7
+        self.assertTrue(np.linalg.norm(nom_u - np.array(inpts)) < tol)
 
     def test_tracking_mpc_missile(self):
         """
@@ -131,9 +133,13 @@ class TestTrackingMPC(TestCase):
         dt = 0.01
         nom_s, nom_u = generate_nom_traj(bc, fe, th, dt)
 
-        Q = np.identity(6)
+        Q = np.zeros((6, 6))
+        Q[0, 0] = 10
+        Q[2, 2] = 10
+        Q[4, 4] = 50
         R = np.identity(3)
-        N = 10
+        R[0, 0] = 10
+        N = 5
 
         mpc = TrackingMPC(f=f_casadi, Q=Q, R=R, dt=dt, N=N, nom_s=nom_s, nom_u=nom_u)
 
