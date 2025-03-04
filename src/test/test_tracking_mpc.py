@@ -137,12 +137,13 @@ class TestTrackingMPC(TestCase):
         Q[0, 0] = 10
         Q[2, 2] = 10
         Q[4, 4] = 200
-        R = np.identity(3)
-        R[0, 0] = 10
-        R[0, 0] = 100
-        R[0, 0] = 100
-        N = 20
 
+        R = np.identity(3)
+        R[0, 0] = 100
+        # R[1, 1] = 100
+        # R[2, 2] = 100
+
+        N = 20
         mpc = TrackingMPC(f=f_casadi, Q=Q, R=R, dt=dt, N=N, nom_s=nom_s, nom_u=nom_u)
 
         # Construct environment
