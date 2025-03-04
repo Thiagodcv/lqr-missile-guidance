@@ -35,17 +35,17 @@ class TestDynamics(TestCase):
 
         # Construct environment
         targ = np.array([bc['xT'], bc['zT']])
-        curr_state = nom_traj[0, :]
+        curr_state = nom_traj[:, 0]
         env = MissileEnv(init_state=curr_state, target=targ, dt=dt)
 
         N = int(T/dt)
         t = 0
         for n in range(N):
             print("curr_state: ", curr_state)
-            print("ref state: ", nom_traj[n, :])
+            print("ref state: ", nom_traj[:, n])
             print("t: ", t)
             print("------------")
-            curr_state, t, targ_hit = env.step(inpt_traj[n, :])
+            curr_state, t, targ_hit = env.step(inpt_traj[:, n])
 
         print("curr_state: ", curr_state)
-        print("ref state: ", nom_traj[N, :])
+        print("ref state: ", nom_traj[:, N])

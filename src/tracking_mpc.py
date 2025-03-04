@@ -1,4 +1,5 @@
 import numpy as np
+import casadi as ca
 from scipy import optimize
 import constants as const
 
@@ -9,10 +10,12 @@ class TrackingMPC:
     trajectory at each time step t.
     """
 
-    def __init__(self, Q, R, dt, N):
+    def __init__(self, f, Q, R, dt, N, nom_s, nom_u):
         """
         Parameters:
         ----------
+        f : function
+            The dynamics function.
         Q : ndarray
             Positive Semi-definite matrix for state reference cost.
         R : ndarray
@@ -20,15 +23,74 @@ class TrackingMPC:
         dt : float
             The interval length between discrete consecutive timesteps.
         N : int
-            The number of timesteps to optimize over.
+            The number of timesteps to optimize over (including current state).
+        nom_s : ndarray
+            An (nx, K+1) array containing the state reference trajectory.
+        nom_u : ndarray
+            An (nu, K) array containing the input reference trajectory.
         """
+        self.f = f
         self.Q = Q
         self.R = R
         self.dt = dt
         self.N = N
+        self.nx = Q.shape[0]
+        self.nu = R.shape[0]
+        self.nom_s = nom_s
+        self.nom_u = nom_u
 
-    def run(self, s_init, s_desired):
-        pass
+        # The current index to start tracking the nominal trajectory from.
+        self.curr_idx = 0
+
+    def run(self, s_init, u_bounds=None, full=False):
+        """
+        Parameters:
+        ----------
+        s_init : ndarray
+            The initial state.
+        u_bounds : ndarray
+            The dictionary containing upper and lower limits for the control inputs. With keys 'u_lb', 'u_ub'.
+        """
+        opti = ca.Opti()
+        N = min(self.nom_s.shape[1] - self.curr_idx - 1, self.N)  # Number of timesteps (including final)
+        s = opti.variable(self.nx, N+1)
+        u = opti.variable(self.nu, N)
+
+        # Compute cost
+        cost = 0
+        for n in range(N+1):
+            s_ref = self.nom_s[:, self.curr_idx + n]
+            cost += ca.mtimes([(s[:, n] - s_ref).T, self.Q, (s[:, n] - s_ref)])
+            if n < N:
+                u_ref = self.nom_u[:, self.curr_idx + n]
+                cost += ca.mtimes([(u[:, n] - u_ref).T, self.R, (u[:, n] - u_ref)])
+
+        # Impose constraints
+        if u_bounds is not None:
+            u_lb = u_bounds["u_lb"]
+            u_ub = u_bounds["u_ub"]
+
+        #s_init = s_init[None, :]
+        opti.subject_to(s[:, 0] == s_init)
+        for n in range(N):
+            opti.subject_to(s[:, n+1] == self.f(s[:, n], u[:, n]))
+
+            if u_bounds is not None:
+                opti.subject_to(u_lb <= u[:, n])
+                opti.subject_to(u[:, n] <= u_ub)
+
+        opti.minimize(cost)
+        opts = {'ipopt.print_level': 0, 'print_time': 0}
+        opti.solver("ipopt", opts)
+        sol = opti.solve()
+
+        # Update nominal trajectory index
+        self.curr_idx += 1
+
+        if full:
+            return sol.value(u)
+        else:
+            return sol.value(u[:, 0])
 
 
 def nom_traj_params(bc):
@@ -110,17 +172,17 @@ def generate_nom_traj(bc, fe, th, dt):
     z_dot = lambda t: (1/m*fe*np.cos(th) - g)*t + bc['z_dot0']
 
     N = int(np.floor(T/dt) + 1)
-    nom_traj = np.zeros((N, 6))
+    nom_traj = np.zeros((6, N))
     t_vals = np.arange(0, T+dt, dt)
 
-    nom_traj[:, 0] = x(t_vals)
-    nom_traj[:, 1] = x_dot(t_vals)
-    nom_traj[:, 2] = z(t_vals)
-    nom_traj[:, 3] = z_dot(t_vals)
-    nom_traj[:, 4] = th * np.ones(N)
-    nom_traj[:, 5] = np.zeros(N)
+    nom_traj[0, :] = x(t_vals)
+    nom_traj[1, :] = x_dot(t_vals)
+    nom_traj[2, :] = z(t_vals)
+    nom_traj[3, :] = z_dot(t_vals)
+    nom_traj[4, :] = th * np.ones(N)
+    nom_traj[5, :] = np.zeros(N)
 
-    inpt_traj = np.zeros((N, 3))
-    inpt_traj[:, 0] = fe * np.ones(N)
+    inpt_traj = np.zeros((3, N))
+    inpt_traj[0, :] = fe * np.ones(N)
 
     return nom_traj, inpt_traj
