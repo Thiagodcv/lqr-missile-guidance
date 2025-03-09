@@ -31,7 +31,7 @@ def tune_tracking_mpc():
     rho = 1.
     R = np.identity(3)
     R[0, 0] = 0.25
-    R[1, 1] = 0.25
+    R[1, 1] = 25  # 0.25
     R[2, 2] = 400
     R = rho * R
 
