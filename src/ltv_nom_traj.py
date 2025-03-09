@@ -90,3 +90,18 @@ def jac(fe, th, bc):
 
     return np.array([[dgx_dfe, dgx_dth],
                      [dgz_dfe, dgz_dth]])
+
+
+def eval_nom_traj(t, fe, th, bc):
+    m0 = const.MASS
+    g = const.GRAVITY
+    alpha = const.ALPHA
+
+    c_x = bc['x_dot0'] + (1 / alpha) * np.log(m0) * np.sin(th)
+    d_x = bc['x0'] - m0 / (alpha ** 2 * fe) * np.log(m0) * np.sin(th)
+    c_z = bc['z_dot0'] + (1 / alpha) * np.log(m0) * np.cos(th)
+    d_z = bc['z0'] - m0 / (alpha ** 2 * fe) * np.log(m0) * np.cos(th)
+
+    gx = -(1/alpha)*np.sin(th)*(t - m0/(alpha * fe))*np.log(m0 - alpha*fe*t) + t/alpha*np.sin(th) + c_x*t + d_x
+    gz = -(1/alpha)*np.cos(th)*(t - m0/(alpha * fe))*np.log(m0 - alpha*fe*t) + t/alpha*np.cos(th) - (1/2)*g*t** 2 + c_z*t + d_z
+    return np.array([gx, gz])

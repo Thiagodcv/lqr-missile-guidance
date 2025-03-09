@@ -1,6 +1,6 @@
 from unittest import TestCase
 import numpy as np
-from src.ltv_system import func, jac, nom_traj_params
+from src.ltv_nom_traj import func, jac, nom_traj_params, eval_nom_traj
 from src.constants import MASS, GRAVITY
 
 
@@ -35,5 +35,9 @@ class TestTrackingMPC(TestCase):
         tol = 1e-5
         self.assertTrue(np.allclose(est_jac, true_jac, rtol=tol, atol=tol))
 
-        sol = nom_traj_params(bc)
-        print(sol)
+        fe, th = nom_traj_params(bc)
+        print("fe: ", fe)
+        print("th: ", th)
+
+        nom_T = eval_nom_traj(bc['T'], fe, th, bc)
+        print("nom_T: ", nom_T)
