@@ -39,5 +39,7 @@ class TestTrackingMPC(TestCase):
         print("fe: ", fe)
         print("th: ", th)
 
-        nom_T = eval_nom_traj(bc['T'], fe, th, bc)
-        print("nom_T: ", nom_T)
+        nom_pos_T = eval_nom_traj(bc['T'], fe, th, bc)
+        print("nom_pos_T: ", nom_pos_T)
+        targ_pos_T = np.array([bc['xT'], bc['zT']])
+        self.assertTrue(np.allclose(nom_pos_T, targ_pos_T, rtol=tol, atol=tol))
