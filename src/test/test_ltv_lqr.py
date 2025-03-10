@@ -2,6 +2,7 @@ from unittest import TestCase
 import numpy as np
 from src.ltv_nom_traj import func, jac, nom_traj_params, eval_nom_traj
 from src.ltv_lqr import A_nom, B_nom, diff_riccati_eq
+from matplotlib import pyplot as plt
 
 
 class TestLTVLQR(TestCase):
@@ -43,16 +44,39 @@ class TestLTVLQR(TestCase):
         self.assertTrue(np.allclose(A, A_test, atol=tol, rtol=tol))
         self.assertTrue(np.allclose(B, B_test, atol=tol, rtol=tol))
 
-    def test_rk4(self):
+    def test_diff_riccati_eq(self):
         """
-        Test rk4 function to ensure no crashing.
+        Test diff_riccati_eq function to ensure no crashing.
         """
         Q = np.identity(7)
         Qf = np.identity(7)
         R = np.identity(3)
         fe = 60
         th = np.pi/4
-        sol = diff_riccati_eq(Q, Qf, R, fe, th)
+        sol = diff_riccati_eq(Q, Qf, R, fe, th, T_final=3.)
         S_seq = sol.y.T.reshape(-1, *Q.shape)
-        print(sol.t)
-        print(S_seq[-1, :, :])  # Last index corresponds to t=0
+        # print(sol.t)
+        # print(S_seq[-1, :, :])  # Last index corresponds to t=0
+
+        # Put S(t) and t in correct order
+        S_seq_adj = S_seq[::-1, :, :]
+        t_seq_adj = sol.t[::-1]
+
+        tol = 1e-7
+        K = len(sol.t)
+        for idx in range(K):
+            np.allclose(S_seq_adj[idx, :, :],
+                        S_seq[K-idx-1, :, :], atol=tol, rtol=tol)
+
+        # GRAPH S(t)
+        n = Q.shape[0]
+        fig, axes = plt.subplots(n, n, figsize=(3*n, 3*n))
+        for i in range(n):
+            for j in range(n):
+                ax = axes[i, j]
+                ax.plot(t_seq_adj, S_seq_adj[:, i, j], label=f'X[{i}, {j}]')
+                ax.grid(True)
+
+        fig.supxlabel("Time")
+        fig.supylabel("S_ij")
+        plt.show()

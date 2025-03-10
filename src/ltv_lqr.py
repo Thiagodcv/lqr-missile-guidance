@@ -43,12 +43,10 @@ def F(t, S_flat, Q, R, fe, th):
     return dS.flatten()
 
 
-def diff_riccati_eq(Q, Qf, R, fe, th):
+def diff_riccati_eq(Q, Qf, R, fe, th, T_final):
     # F_wrap = lambda t, S: F(t, S, Q, R, fe, th)
     S_final = Qf.flatten()
 
     T_init = 0
-    T_final = 3.
     sol = solve_ivp(F, [T_final, T_init], S_final, args=(Q, R, fe, th))
     return sol
-
