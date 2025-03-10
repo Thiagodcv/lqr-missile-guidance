@@ -1,7 +1,7 @@
 from unittest import TestCase
 import numpy as np
 from src.ltv_nom_traj import func, jac, nom_traj_params, eval_nom_traj
-from src.ltv_lqr import A_nom, B_nom
+from src.ltv_lqr import A_nom, B_nom, diff_riccati_eq
 
 
 class TestLTVLQR(TestCase):
@@ -13,6 +13,9 @@ class TestLTVLQR(TestCase):
         pass
 
     def test_A_nom_B_nom(self):
+        """
+        Test to ensure A_nom and B_nom return same values as MATLAB implementation.
+        """
         t = 1.5
         fe = 64.13
         th = 0.61
@@ -39,3 +42,17 @@ class TestLTVLQR(TestCase):
         tol = 1e-3
         self.assertTrue(np.allclose(A, A_test, atol=tol, rtol=tol))
         self.assertTrue(np.allclose(B, B_test, atol=tol, rtol=tol))
+
+    def test_rk4(self):
+        """
+        Test rk4 function to ensure no crashing.
+        """
+        Q = np.identity(7)
+        Qf = np.identity(7)
+        R = np.identity(3)
+        fe = 60
+        th = np.pi/4
+        sol = diff_riccati_eq(Q, Qf, R, fe, th)
+        S_seq = sol.y.T.reshape(-1, *Q.shape)
+        print(sol.t)
+        print(S_seq[-1, :, :])  # Last index corresponds to t=0

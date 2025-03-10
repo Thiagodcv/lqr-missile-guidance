@@ -1,6 +1,6 @@
 import numpy as np
-from scipy import optimize
 import constants as const
+from scipy.integrate import solve_ivp
 
 
 def A_nom(t, fe, th):
@@ -31,3 +31,24 @@ def B_nom(t, fe, th):
                   [0., l2/J, -fe/J*(l1+ln)],
                   [-alpha, 0., 0.]])
     return B
+
+
+def F(t, S_flat, Q, R, fe, th):
+    A = A_nom(t, fe, th)
+    B = B_nom(t, fe, th)
+    S = S_flat.reshape(A.shape)
+    R_inv = np.linalg.inv(R)  # Assuming R is diagonal
+
+    dS = -S @ A - A.T @ S + S @ B @ R_inv @ B.T @ S - Q
+    return dS.flatten()
+
+
+def diff_riccati_eq(Q, Qf, R, fe, th):
+    # F_wrap = lambda t, S: F(t, S, Q, R, fe, th)
+    S_final = Qf.flatten()
+
+    T_init = 0
+    T_final = 3.
+    sol = solve_ivp(F, [T_final, T_init], S_final, args=(Q, R, fe, th))
+    return sol
+
