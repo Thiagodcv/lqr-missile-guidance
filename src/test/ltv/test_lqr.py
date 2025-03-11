@@ -1,6 +1,6 @@
 from unittest import TestCase
 import numpy as np
-from ltv_missile.lqr import A_nom, B_nom, diff_riccati_eq
+from ltv_missile.lqr import A_nom, B_nom, diff_riccati_eq, get_S_interp, S
 from scipy.interpolate import interp1d
 from matplotlib import pyplot as plt
 import scipy.io as sio
@@ -95,3 +95,35 @@ class TestLTVLQR(TestCase):
         # Save S_seq and t_seq in MATLAB data file
         save_loc = "C:/Users/thiag/OneDrive/Desktop/MECH 509/Project/Missile Matlab Code/"
         sio.savemat(save_loc + "riccati_data.mat", {'S_seq': S_seq, 't_seq': t_seq})
+
+    def test_get_S_cubic(self):
+        """
+        Test get_S_cubic function to ensure no crashing.
+        """
+        Q = np.identity(7)
+        Qf = np.identity(7)
+        R = np.identity(3)
+        fe = 60
+        th = np.pi/4
+        T_final = 3.
+        n = Q.shape[0]
+
+        interp = get_S_interp(Q, Qf, R, fe, th, T_final=T_final)
+
+        # GRAPH S(t)
+        # n = Q.shape[0]
+        # t_seq_even = np.arange(0., 3., 0.01)  # Evenly spaced time steps
+        # fig, axes = plt.subplots(n, n, figsize=(3 * n, 3 * n))
+        # for i in range(n):
+        #     for j in range(n):
+        #         ax = axes[i, j]
+        #
+        #         # Plot interpolation
+        #         S_ij_smooth = [interpolators[i][j](t) for t in t_seq_even]
+        #         ax.plot(t_seq_even, S_ij_smooth, color='red', linestyle=':')
+        #
+        #         ax.grid(True)
+        #
+        # fig.supxlabel("Time")
+        # fig.supylabel("S_ij")
+        # plt.show()

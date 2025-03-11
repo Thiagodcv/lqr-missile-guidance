@@ -1,6 +1,7 @@
 import numpy as np
 import constants as const
 from scipy.integrate import solve_ivp
+from scipy.interpolate import interp1d
 
 
 def A_nom(t, fe, th):
@@ -50,3 +51,23 @@ def diff_riccati_eq(Q, Qf, R, fe, th, T_final):
     T_init = 0
     sol = solve_ivp(F, [T_final, T_init], S_final, args=(Q, R, fe, th))
     return sol
+
+
+def get_S_interp(Q, Qf, R, fe, th, T_final):
+    # Get S(t) evaluated at finitely-many points in [0, T_final] via differential riccati equation
+    sol = diff_riccati_eq(Q, Qf, R, fe, th, T_final)
+    S_seq_inv = sol.y.T.reshape(-1, *Q.shape)
+
+    # Put S(t) and t in correct order
+    S_seq = S_seq_inv[::-1, :, :]
+    t_seq = sol.t[::-1]
+
+    # Interpolate S solution using cubic splines
+    n = Q.shape[0]
+    interp = [[interp1d(t_seq, S_seq[:, i, j],
+                        kind='cubic', fill_value='extrapolate') for j in range(n)] for i in range(n)]
+    return interp
+
+
+def S(t, interp, n):
+    return np.array([[interp[i][j](t) for j in range(n)] for i in range(n)])
