@@ -1,7 +1,6 @@
 from unittest import TestCase
 import numpy as np
-from src.ltv_nom_traj import func, jac, nom_traj_params, eval_nom_traj
-from src.constants import MASS, GRAVITY
+from ltv_missile.nom_traj import func, jac, nom_traj_params, eval_nom_traj
 
 
 class TestTrackingMPC(TestCase):

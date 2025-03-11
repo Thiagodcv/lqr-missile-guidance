@@ -1,7 +1,6 @@
 from unittest import TestCase
 import numpy as np
-from src.ltv_nom_traj import func, jac, nom_traj_params, eval_nom_traj
-from src.ltv_lqr import A_nom, B_nom, diff_riccati_eq
+from ltv_missile.lqr import A_nom, B_nom, diff_riccati_eq
 from scipy.interpolate import interp1d
 from matplotlib import pyplot as plt
 import scipy.io as sio
