@@ -55,22 +55,22 @@ class TestLTVLQR(TestCase):
         fe = 60
         th = np.pi/4
         sol = diff_riccati_eq(Q, Qf, R, fe, th, T_final=3.)
-        S_seq = sol.y.T.reshape(-1, *Q.shape)
+        S_seq_inv = sol.y.T.reshape(-1, *Q.shape)
         # print(sol.t)
         # print(S_seq[-1, :, :])  # Last index corresponds to t=0
 
         # Put S(t) and t in correct order
-        S_seq_adj = S_seq[::-1, :, :]
-        t_seq_adj = sol.t[::-1]
+        S_seq = S_seq_inv[::-1, :, :]
+        t_seq = sol.t[::-1]
 
         tol = 1e-7
         K = len(sol.t)
         for idx in range(K):
-            self.assertTrue(np.allclose(S_seq_adj[idx, :, :], S_seq[K-idx-1, :, :], atol=tol, rtol=tol))
+            self.assertTrue(np.allclose(S_seq_inv[idx, :, :], S_seq[K-idx-1, :, :], atol=tol, rtol=tol))
 
         # Interpolate S solution using cubic splines
         n = Q.shape[0]
-        interpolators = [[interp1d(t_seq_adj, S_seq_adj[:, i, j],
+        interpolators = [[interp1d(t_seq, S_seq[:, i, j],
                                    kind='cubic', fill_value='extrapolate') for j in range(n)] for i in range(n)]
 
         # GRAPH S(t)
@@ -80,7 +80,7 @@ class TestLTVLQR(TestCase):
             for j in range(n):
                 ax = axes[i, j]
                 # Plot RK solution
-                ax.plot(t_seq_adj, S_seq_adj[:, i, j], label=f'S[{i}, {j}]', color='blue')
+                ax.plot(t_seq, S_seq[:, i, j], label=f'S[{i}, {j}]', color='blue')
 
                 # Plot interpolation
                 S_ij_smooth = [interpolators[i][j](t) for t in t_seq_even]
