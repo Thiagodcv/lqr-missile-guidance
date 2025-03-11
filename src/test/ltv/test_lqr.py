@@ -80,11 +80,11 @@ class TestLTVLQR(TestCase):
             for j in range(n):
                 ax = axes[i, j]
                 # Plot RK solution
-                ax.plot(t_seq, S_seq[:, i, j], label=f'S[{i}, {j}]', color='blue')
+                ax.plot(t_seq, S_seq[:, i, j], label=f'S[{i}, {j}]', color='red', linestyle=":")
 
                 # Plot interpolation
                 S_ij_smooth = [interpolators[i][j](t) for t in t_seq_even]
-                ax.plot(t_seq_even, S_ij_smooth, color='red', linestyle=':')
+                ax.plot(t_seq_even, S_ij_smooth, color='blue')
 
                 ax.grid(True)
 
@@ -99,6 +99,8 @@ class TestLTVLQR(TestCase):
     def test_get_S_cubic(self):
         """
         Test get_S_cubic function to ensure no crashing.
+
+        TODO: Figure out issue with vertical lines.
         """
         Q = np.identity(7)
         Qf = np.identity(7)
@@ -111,19 +113,21 @@ class TestLTVLQR(TestCase):
         interp = get_S_interp(Q, Qf, R, fe, th, T_final=T_final)
 
         # GRAPH S(t)
-        # n = Q.shape[0]
-        # t_seq_even = np.arange(0., 3., 0.01)  # Evenly spaced time steps
-        # fig, axes = plt.subplots(n, n, figsize=(3 * n, 3 * n))
-        # for i in range(n):
-        #     for j in range(n):
-        #         ax = axes[i, j]
-        #
-        #         # Plot interpolation
-        #         S_ij_smooth = [interpolators[i][j](t) for t in t_seq_even]
-        #         ax.plot(t_seq_even, S_ij_smooth, color='red', linestyle=':')
-        #
-        #         ax.grid(True)
-        #
-        # fig.supxlabel("Time")
-        # fig.supylabel("S_ij")
-        # plt.show()
+        t_seq_even = np.arange(0., T_final, 0.01)  # Evenly spaced time steps
+        # S_seq = np.zeros((len(t_seq_even), n, n))
+        # for t in t_seq_even:
+        #     idx = int(100*t)
+        #     S_seq[idx, :, :] = S(t, interp, n)
+
+        fig, axes = plt.subplots(n, n, figsize=(3 * n, 3 * n))
+        for i in range(n):
+            for j in range(n):
+                ax = axes[i, j]
+
+                # Plot interpolation
+                ax.plot(t_seq_even, [S(t, interp, n)[i, j] for t in t_seq_even])
+                ax.grid(True)
+
+        fig.supxlabel("Time")
+        fig.supylabel("S_ij")
+        plt.show()
