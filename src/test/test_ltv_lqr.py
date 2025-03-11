@@ -4,6 +4,7 @@ from src.ltv_nom_traj import func, jac, nom_traj_params, eval_nom_traj
 from src.ltv_lqr import A_nom, B_nom, diff_riccati_eq
 from scipy.interpolate import interp1d
 from matplotlib import pyplot as plt
+import scipy.io as sio
 
 
 class TestLTVLQR(TestCase):
@@ -91,3 +92,7 @@ class TestLTVLQR(TestCase):
         fig.supxlabel("Time")
         fig.supylabel("S_ij")
         plt.show()
+
+        # Save S_seq and t_seq in MATLAB data file
+        save_loc = "C:/Users/thiag/OneDrive/Desktop/MECH 509/Project/Missile Matlab Code/"
+        sio.savemat(save_loc + "riccati_data.mat", {'S_seq': S_seq, 't_seq': t_seq})
