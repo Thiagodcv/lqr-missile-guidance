@@ -2,6 +2,7 @@ from unittest import TestCase
 import numpy as np
 from src.ltv_nom_traj import func, jac, nom_traj_params, eval_nom_traj
 from src.ltv_lqr import A_nom, B_nom, diff_riccati_eq
+from scipy.interpolate import interp1d
 from matplotlib import pyplot as plt
 
 
@@ -65,16 +66,26 @@ class TestLTVLQR(TestCase):
         tol = 1e-7
         K = len(sol.t)
         for idx in range(K):
-            np.allclose(S_seq_adj[idx, :, :],
-                        S_seq[K-idx-1, :, :], atol=tol, rtol=tol)
+            self.assertTrue(np.allclose(S_seq_adj[idx, :, :], S_seq[K-idx-1, :, :], atol=tol, rtol=tol))
+
+        # Interpolate S solution using cubic splines
+        n = Q.shape[0]
+        interpolators = [[interp1d(t_seq_adj, S_seq_adj[:, i, j],
+                                   kind='cubic', fill_value='extrapolate') for j in range(n)] for i in range(n)]
 
         # GRAPH S(t)
-        n = Q.shape[0]
-        fig, axes = plt.subplots(n, n, figsize=(3*n, 3*n))
+        t_seq_even = np.arange(0., 3., 0.01)  # Evenly spaced time steps
+        fig, axes = plt.subplots(n, n, figsize=(3 * n, 3 * n))
         for i in range(n):
             for j in range(n):
                 ax = axes[i, j]
-                ax.plot(t_seq_adj, S_seq_adj[:, i, j], label=f'X[{i}, {j}]')
+                # Plot RK solution
+                ax.plot(t_seq_adj, S_seq_adj[:, i, j], label=f'S[{i}, {j}]', color='blue')
+
+                # Plot interpolation
+                S_ij_smooth = [interpolators[i][j](t) for t in t_seq_even]
+                ax.plot(t_seq_even, S_ij_smooth, color='red', linestyle=':')
+
                 ax.grid(True)
 
         fig.supxlabel("Time")
