@@ -1,7 +1,7 @@
-MASS = 2.
+MASS = 200.
 GRAVITY = 9.8
 L1 = 1.5
 L2 = 1.
 Ln = 0.1
-ALPHA = 0.005
-BETA = 0.01
+ALPHA = 0.01
+BETA = 0.001

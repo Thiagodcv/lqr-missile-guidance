@@ -52,6 +52,7 @@ def func(fe, th, bc):
     zT = bc['zT']
     T = bc['T']
 
+    # print("mT: ", m0 - alpha*fe*T)
     gx = -(1/alpha)*np.sin(th)*(T-m0/(alpha*fe))*np.log(m0 - alpha*fe*T) + T/alpha*np.sin(th) + c_x*T + d_x - xT
     gz = (-(1/alpha)*np.cos(th)*(T-m0/(alpha*fe))*np.log(m0 - alpha*fe*T) + T/alpha*np.cos(th) - (1/2)*g*T**2
           + c_z*T + d_z - zT)

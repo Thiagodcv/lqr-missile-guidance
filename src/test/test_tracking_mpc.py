@@ -18,9 +18,9 @@ class TestTrackingMPC(TestCase):
               'x_dot0': 0.,
               'z0': 0.,
               'z_dot0': 0.,
-              'T': 1.,
-              'xT': 1000.,  # travel 1400m in one second
-              'zT': 1000.}
+              'T': 5.,
+              'xT': 100.,  # travel 1400m in one second
+              'zT': 100.}
 
         m = MASS
         g = GRAVITY
@@ -50,7 +50,7 @@ class TestTrackingMPC(TestCase):
         sol = nom_traj_params(bc)
         self.assertTrue(np.linalg.norm(fun(sol)) < tol)
         print("F_E: ", sol[0])
-        print("th: ", sol[1])
+        print("th: ", sol[1] % (2*np.pi))
         print(fun(sol))
 
     def test_generate_nom_traj(self):
