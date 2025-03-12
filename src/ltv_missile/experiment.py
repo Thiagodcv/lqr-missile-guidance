@@ -12,12 +12,13 @@ def experiment():
           'z0': 0,
           'z_dot0': 0,
           'T': 5,
-          'xT': 100,
-          'zT': 100}
+          'xT': 1000,
+          'zT': 500}
     fe_nom, th_nom = nom_traj_params(bc)
     th_nom = th_nom % (2*np.pi)
     print(fe_nom)
     print(th_nom)
+    print(eval_nom_traj(5, fe_nom, th_nom, bc))
 
 
 if __name__ == '__main__':

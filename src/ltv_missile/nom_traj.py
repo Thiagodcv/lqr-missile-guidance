@@ -34,7 +34,7 @@ def nom_traj_params(bc):
         th = x[1]
         return jac(fe, th, bc)
 
-    x_init = np.array([100, np.pi/4])
+    x_init = np.array([1000, np.pi/4])
     sol = optimize.root(func_wrap, x_init, jac=jac_wrap, method='hybr')
     return sol.x
 
