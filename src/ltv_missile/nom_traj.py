@@ -93,7 +93,7 @@ def jac(fe, th, bc):
                      [dgz_dfe, dgz_dth]])
 
 
-def eval_nom_traj(t, fe, th, bc):
+def nom_state(t, fe, th, bc):
     m0 = const.MASS
     g = const.GRAVITY
     alpha = const.ALPHA
@@ -103,6 +103,12 @@ def eval_nom_traj(t, fe, th, bc):
     c_z = bc['z_dot0'] + (1 / alpha) * np.log(m0) * np.cos(th)
     d_z = bc['z0'] - m0 / (alpha ** 2 * fe) * np.log(m0) * np.cos(th)
 
-    gx = -(1/alpha)*np.sin(th)*(t - m0/(alpha * fe))*np.log(m0 - alpha*fe*t) + t/alpha*np.sin(th) + c_x*t + d_x
-    gz = -(1/alpha)*np.cos(th)*(t - m0/(alpha * fe))*np.log(m0 - alpha*fe*t) + t/alpha*np.cos(th) - (1/2)*g*t** 2 + c_z*t + d_z
-    return np.array([gx, gz])
+    x = -(1/alpha)*np.sin(th)*(t - m0/(alpha * fe))*np.log(m0 - alpha*fe*t) + t/alpha*np.sin(th) + c_x*t + d_x
+    z = -(1/alpha)*np.cos(th)*(t - m0/(alpha * fe))*np.log(m0 - alpha*fe*t) + t/alpha*np.cos(th) - (1/2)*g*t** 2 + c_z*t + d_z
+
+    x_dot = -(1/alpha)*np.log(m0 - alpha*fe*t)*np.sin(th) + c_x
+    z_dot = -(1/alpha)*np.log(m0 - alpha*fe*t)*np.cos(th) - g*t + c_z
+
+    th_dot = 0
+    m = m0 - alpha*fe*t
+    return np.array([x, x_dot, z, z_dot, th, th_dot, m])
