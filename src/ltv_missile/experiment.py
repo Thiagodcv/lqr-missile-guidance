@@ -1,7 +1,9 @@
 import numpy as np
+from scipy.integrate import solve_ivp
 from src.ltv_missile.dynamics import f
 from src.ltv_missile.lqr import A_nom, B_nom, get_S_interp, S
 from src.ltv_missile.nom_traj import nom_traj_params, nom_state
+import constants as const
 
 
 def experiment():
@@ -16,9 +18,10 @@ def experiment():
           'zT': 500}
     fe_nom, th_nom = nom_traj_params(bc)
     th_nom = th_nom % (2*np.pi)
-    print(fe_nom)
-    print(th_nom)
-    print(nom_state(5, fe_nom, th_nom, bc))
+    nom_input = np.array([fe_nom, 0., 0.])
+    # print(fe_nom)
+    # print(th_nom)
+    # print(nom_state(5, fe_nom, th_nom, bc))
 
     # Define state and input cost
     Q = np.identity(7)
@@ -42,8 +45,20 @@ def experiment():
     S_interp = get_S_interp(Q, Q, R, fe_nom, th_nom, bc['T'])
 
     def dyn(t, x):
+        # Compute LQR control input
         K = R_inv @ B_nom(t, fe_nom, th_nom).T @ S(t, S_interp, n)
-        pass
+        dx = x - nom_state(t, fe_nom, th_nom, bc)
+        u = -K @ dx + nom_input
+
+        x_dot = f(x, u)
+        return x_dot
+
+    th0 = np.pi/8
+    m0 = const.MASS
+    init_state = np.array([0., 0., 0., 0., th0, 0., m0])
+
+    sol = solve_ivp(dyn, [0., bc['T']], init_state)
+    print(sol)
 
 
 if __name__ == '__main__':
