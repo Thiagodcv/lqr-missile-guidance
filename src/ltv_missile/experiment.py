@@ -66,11 +66,15 @@ def experiment():
     print(sol)
 
     # Plot results
-    num_plots = 7
     t_seq = sol.t
     x_seq = [sol.y[:, t] for t in range(sol.y.shape[1])]
     nom_state_seq = np.array([nom_state(t, fe_nom, th_nom, bc) for t in t_seq]).T
     true_input_seq = np.array([opt_u(t, x) for t, x in zip(t_seq, x_seq)]).T
+    plot_dynamics(t_seq, sol, nom_state_seq, true_input_seq, fe_nom)
+
+
+def plot_dynamics(t_seq, sol, nom_state_seq, true_input_seq, fe_nom):
+    num_plots = 7
     fig, axes = plt.subplots(num_plots, 1, figsize=(8, 10), sharex=True)
 
     # x coordinate
@@ -104,7 +108,7 @@ def experiment():
     # trust fe
     fe_ax = axes[4]
     fe_ax.plot(t_seq, true_input_seq[0, :])
-    fe_ax.plot(t_seq, fe_nom*np.ones(len(t_seq)))
+    fe_ax.plot(t_seq, fe_nom * np.ones(len(t_seq)))
     fe_ax.set_ylim(80500, 80575)
     # fe_ax.legend()
     fe_ax.set_ylabel("fe(t)")
