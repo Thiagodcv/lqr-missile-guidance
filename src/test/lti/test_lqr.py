@@ -38,3 +38,34 @@ class TestLTILQR(TestCase):
         tol = 1e-3
         self.assertTrue(np.allclose(A, A_test, atol=tol, rtol=tol))
         self.assertTrue(np.allclose(B, B_test, atol=tol, rtol=tol))
+
+    def test_S(self):
+        fe = 80_000
+        th = np.pi/4
+
+        Q = np.identity(6)
+        Q[0, 0] = 4.
+        Q[1, 1] = 0.04
+        Q[2, 2] = 4.
+        Q[3, 3] = 0.04
+        Q[4, 4] = 2500.
+        Q[5, 5] = 25.
+
+        R = np.identity(3)
+        R[0, 0] = 0.04
+        R[1, 1] = 100.
+        R[2, 2] = 2500.
+        R_inv = np.linalg.inv(R)
+
+        S_mat = S(Q, R, fe, th)
+
+        B = B_nom(fe, th)
+        K = R_inv @ B.T @ S_mat
+        print(K)
+
+        K_test = np.array([[7.0711, 100.0025, 7.0711, 100.0025, 0., 0.],
+                           [0., 0., 0., 0., 0.0006, 0.0001],
+                           [-0.0283, -0.0272, 0.0283, 0.0272, -1.4600, -0.2041]])
+
+        tol = 1e-4
+        self.assertTrue(np.allclose(K, K_test, atol=tol, rtol=tol))
