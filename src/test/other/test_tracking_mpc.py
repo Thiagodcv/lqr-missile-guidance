@@ -1,8 +1,8 @@
 from unittest import TestCase
 import numpy as np
-from src.tracking_mpc import nom_traj_params, generate_nom_traj, TrackingMPC
+from other.tracking_mpc import nom_traj_params, generate_nom_traj, TrackingMPC
 from src.constants import MASS, GRAVITY
-from src.dynamics import MissileEnv, f_casadi
+from other.dynamics import MissileEnv, f_casadi
 
 
 class TestTrackingMPC(TestCase):

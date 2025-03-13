@@ -1,7 +1,7 @@
 from unittest import TestCase
 import src.constants as const
-from src.tracking_mpc import nom_traj_params, generate_nom_traj
-from src.dynamics import MissileEnv
+from other.tracking_mpc import nom_traj_params, generate_nom_traj
+from other.dynamics import MissileEnv
 import numpy as np
 
 
