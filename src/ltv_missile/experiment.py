@@ -118,7 +118,7 @@ def experiment():
 
     # nozzle angle
     phi_ax = axes[6]
-    phi_ax.plot(t_seq, true_input_seq[1, :])
+    phi_ax.plot(t_seq, true_input_seq[2, :])
     phi_ax.plot(t_seq, np.zeros(len(t_seq)))
     # phi_ax.legend()
     phi_ax.set_ylabel("phi(t)")
