@@ -1,6 +1,6 @@
 import numpy as np
-from src.tracking_mpc import nom_traj_params, generate_nom_traj, TrackingMPC
-from src.dynamics import MissileEnv, f_casadi
+from other.tracking_mpc import nom_traj_params, generate_nom_traj, TrackingMPC
+from other.dynamics import MissileEnv, f_casadi
 
 
 def tune_tracking_mpc():
