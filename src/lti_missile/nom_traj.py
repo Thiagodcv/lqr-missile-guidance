@@ -40,7 +40,7 @@ def nom_traj_params(bc):
         return T**2/(2*m) * np.array([[np.sin(th), fe*np.cos(th)],
                                       [np.cos(th), -fe*np.sin(th)]])
 
-    x_init = [5, np.pi/4]
+    x_init = [10_000, np.pi/4]
     sol = optimize.root(fun, x_init, jac=jac, method='hybr')
     return sol.x
 
