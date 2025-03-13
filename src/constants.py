@@ -1,7 +1,7 @@
-MASS = 1.
+MASS = 1000.
 GRAVITY = 9.8
 L1 = 1.5
 L2 = 1.
 Ln = 0.1
-ALPHA = 0.1
-BETA = 0.1
+ALPHA = 0.001
+BETA = 0.0001
