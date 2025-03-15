@@ -15,32 +15,32 @@ class TestLTILQR(TestCase):
         """
         Test to ensure A_nom and B_nom return same values as MATLAB implementation.
         """
-        fe = 80000
+        fe = 5400
         th = np.pi/4
 
         A = A_nom(fe, th)
         B = B_nom(fe, th)
 
         A_test = np.array([[0., 1., 0., 0., 0., 0.],
-                           [0., 0., 0., 0., 56.5685, 0.],
+                           [0., 0., 0., 0., 38.1838, 0.],
                            [0., 0., 0., 1., 0., 0.],
-                           [0., 0., 0., 0., -56.5685, 0.],
+                           [0., 0., 0., 0., -38.1838, 0.],
                            [0., 0., 0., 0., 0., 1.],
                            [0., 0., 0., 0., 0., 0.]])
 
         B_test = np.array([[0., 0., 0.],
-                           [0.0007, 0.0007, 56.5685],
+                           [0.0071, 0.0071, 38.1838],
                            [0., 0., 0.],
-                           [0.0007, -0.0007, -56.5685],
+                           [0.0071, -0.0071, -38.1838],
                            [0., 0., 0.],
-                           [0., 0.0010, -128.0000]])
+                           [0., 0.0199, -114.8732]])
 
         tol = 1e-3
         self.assertTrue(np.allclose(A, A_test, atol=tol, rtol=tol))
         self.assertTrue(np.allclose(B, B_test, atol=tol, rtol=tol))
 
     def test_S(self):
-        fe = 80_000
+        fe = 5400
         th = np.pi/4
 
         Q = np.identity(6)
@@ -63,9 +63,9 @@ class TestLTILQR(TestCase):
         K = R_inv @ B.T @ S_mat
         print(K)
 
-        K_test = np.array([[7.0711, 100.0025, 7.0711, 100.0025, 0., 0.],
-                           [0., 0., 0., 0., 0.0006, 0.0001],
-                           [-0.0283, -0.0272, 0.0283, 0.0272, -1.4600, -0.2041]])
+        K_test = np.array([[7.0711, 31.6307, 7.0711, 31.6307, 0., 0.],
+                           [0.0005, 0.0005, -0.0005, -0.0005, 0.0101, 0.0013],
+                           [-0.0283, -0.0322, 0.0283, 0.0322, -1.3849, -0.2052]])
 
         tol = 1e-4
         self.assertTrue(np.allclose(K, K_test, atol=tol, rtol=tol))

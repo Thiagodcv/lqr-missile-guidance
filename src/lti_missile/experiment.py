@@ -15,9 +15,9 @@ def experiment():
           'x_dot0': 0,
           'z0': 0,
           'z_dot0': 0,
-          'T': 5,
-          'xT': 1000,
-          'zT': 500}
+          'T': 30,
+          'xT': 20_000,
+          'zT': 10_000}
     fe_nom, th_nom = nom_traj_params(bc)
     th_nom = th_nom % (2*np.pi)
     nom_input = np.array([fe_nom, 0., 0.])
@@ -70,7 +70,7 @@ def experiment():
     x_seq = [sol.y[:, t] for t in range(sol.y.shape[1])]
     nom_state_seq = np.array([nom_state(t, fe_nom, th_nom, bc) for t in t_seq]).T
     true_input_seq = np.array([opt_u(t, x) for t, x in zip(t_seq, x_seq)]).T
-    plot_dynamics(t_seq, sol, nom_state_seq, true_input_seq, fe_nom, include_mass=False, fe_lim=[94000, 95000])
+    plot_dynamics(t_seq, sol, nom_state_seq, true_input_seq, fe_nom, include_mass=False, fe_lim=[5450, 5575])
 
 
 if __name__ == '__main__':
