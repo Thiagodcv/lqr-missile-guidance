@@ -1,9 +1,8 @@
 import numpy as np
-from matplotlib import pyplot as plt
 from scipy.integrate import solve_ivp
-from src.lti_missile.dynamics import f
-from src.lti_missile.lqr import A_nom, B_nom, S
-from src.lti_missile.nom_traj import nom_traj_params, nom_state
+from src.ltv_missile.dynamics import f
+from src.ltv_missile.lqr import A_nom, B_nom, get_S_interp, S
+from src.ltv_missile.nom_traj import nom_traj_params, nom_state
 import constants as const
 from src.utils import plot_dynamics
 
@@ -35,16 +34,17 @@ def experiment():
         return x_dot
 
     th0 = th_nom
-    init_state = np.array([0., 0., 0., 0., th0, 0.])
+    m0 = const.MASS
+    init_state = np.array([0., 0., 0., 0., th0, 0., m0])
 
-    sol = solve_ivp(dyn, [0., bc['T']], init_state)
+    sol = solve_ivp(dyn, [0., bc['T']], init_state, rtol=1e-3, atol=1e-6)
     print(sol)
 
     # Plot results
     t_seq = sol.t
     nom_state_seq = np.array([nom_state(t, fe_nom, th_nom, bc) for t in t_seq]).T
     true_input_seq = np.array([nom_input for t in t_seq]).T
-    plot_dynamics(t_seq, sol, nom_state_seq, true_input_seq, fe_nom, include_mass=False, fe_lim=[5450, 5575])
+    plot_dynamics(t_seq, sol, nom_state_seq, true_input_seq, fe_nom, fe_lim=[4600, 4750])
 
 
 if __name__ == '__main__':

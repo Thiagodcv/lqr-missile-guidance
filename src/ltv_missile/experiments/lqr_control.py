@@ -56,13 +56,16 @@ def experiment():
         # Closed-loop system
         u = opt_u(t, x)
         x_dot = f(x, u)
+
+        # Add noise to theta_ddot
+        x_dot[5] += np.random.normal(scale=0.1)
         return x_dot
 
     th0 = np.pi/8
     m0 = const.MASS
     init_state = np.array([0., 0., 0., 0., th0, 0., m0])
 
-    sol = solve_ivp(dyn, [0., bc['T']], init_state)
+    sol = solve_ivp(dyn, [0., bc['T']], init_state, rtol=1e-3, atol=1e-6)
     print(sol)
 
     # Plot results
