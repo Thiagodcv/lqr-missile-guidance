@@ -4,5 +4,5 @@ L1 = 1.5
 L2 = 1.5
 Ln = 0.1
 DIAMETER = 0.16
-ALPHA = 0.001
+ALPHA = 0.0003
 BETA = 0.0001

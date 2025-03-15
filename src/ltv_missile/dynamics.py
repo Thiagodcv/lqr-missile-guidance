@@ -30,11 +30,11 @@ def f(s, u):
     phi = u[2]
 
     # Other constants.
-    inert_tensr = m  # TODO: Figure out the correct expression for the inertia tensor
     g = const.GRAVITY
     l1 = const.L1
     l2 = const.L2
     ln = const.Ln
+    inert_tensr = ((l1 + l2) ** 2 + const.DIAMETER ** 2) / 12 * m
     alpha = const.ALPHA
     beta = const.BETA
 
