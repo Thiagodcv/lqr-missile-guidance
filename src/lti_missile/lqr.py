@@ -19,7 +19,7 @@ def B_nom(fe, th):
     l2 = const.L2
     ln = const.Ln
     m = const.MASS
-    J = m
+    J = ((l1+l2)**2 + const.DIAMETER**2)/12*m
 
     B = np.array([[0., 0., 0.],
                   [1/m*np.sin(th), 1/m*np.cos(th), fe/m*np.cos(th)],
