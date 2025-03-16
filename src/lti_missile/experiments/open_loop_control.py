@@ -6,6 +6,7 @@ from src.lti_missile.lqr import A_nom, B_nom, S
 from src.lti_missile.nom_traj import nom_traj_params, nom_state
 import constants as const
 from src.utils import plot_dynamics
+import sdeint
 
 
 def experiment():
@@ -25,26 +26,28 @@ def experiment():
     print("th_nom: ", th_nom)
     # print(nom_state(5, fe_nom, th_nom, bc))
 
-    def dyn(t, x):
+    def dyn(x, t):
         # Closed-loop system
         u = nom_input
         x_dot = f(x, u)
-
-        # Add noise to theta_ddot
-        x_dot[5] += np.random.normal(scale=0.1)
         return x_dot
+
+    G_mat = np.zeros((6, 6))
+    G_mat[5, 5] = 0.1
+
+    def G(x, t):
+        return G_mat
 
     th0 = th_nom
     init_state = np.array([0., 0., 0., 0., th0, 0.])
-
-    sol = solve_ivp(dyn, [0., bc['T']], init_state)
-    print(sol)
+    t_span = np.linspace(0.0, bc['T'], 3000)
+    sol = sdeint.itoint(dyn, G, init_state, t_span)
+    # print(sol)
 
     # Plot results
-    t_seq = sol.t
-    nom_state_seq = np.array([nom_state(t, fe_nom, th_nom, bc) for t in t_seq]).T
-    true_input_seq = np.array([nom_input for t in t_seq]).T
-    plot_dynamics(t_seq, sol, nom_state_seq, true_input_seq, fe_nom, include_mass=False, fe_lim=[5450, 5575])
+    nom_state_seq = np.array([nom_state(t, fe_nom, th_nom, bc) for t in t_span])
+    true_input_seq = np.array([nom_input for t in t_span])
+    plot_dynamics(t_span, sol, nom_state_seq, true_input_seq, fe_nom, include_mass=False, fe_lim=[5450, 5575])
 
 
 if __name__ == '__main__':

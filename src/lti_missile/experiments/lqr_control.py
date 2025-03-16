@@ -62,6 +62,7 @@ def experiment():
 
     G_mat = np.zeros((6, 6))
     G_mat[5, 5] = 0.1
+
     def G(x, t):
         return G_mat
 
