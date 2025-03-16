@@ -40,7 +40,7 @@ def experiment():
     sol = solve_ivp(dyn, [0., bc['T']], init_state)
     print(sol)
 
-    # Plot results
+    # Plot results.
     t_seq = sol.t
     nom_state_seq = np.array([nom_state(t, fe_nom, th_nom, bc) for t in t_seq]).T
     true_input_seq = np.array([nom_input for t in t_seq]).T
