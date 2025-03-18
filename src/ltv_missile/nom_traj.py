@@ -153,6 +153,7 @@ def min_time_nom(bc, fe_max):
     bounds = [(0, fe_max), (0, 2*np.pi), (0, None)]
     init_guess = np.array([4000., np.pi/4, 40.])
     result = optimize.minimize(objective, init_guess, method='SLSQP', constraints=constraints, bounds=bounds)
+    return result
 
 
 def nom_state(t, fe, th, bc):

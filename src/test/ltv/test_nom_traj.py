@@ -1,6 +1,7 @@
 from unittest import TestCase
 import numpy as np
-from ltv_missile.nom_traj import func, jac, nom_traj_params, nom_state
+from ltv_missile.nom_traj import func, jac, nom_traj_params, nom_state, min_time_nom
+import constants as const
 
 
 class TestTrackingMPC(TestCase):
@@ -71,3 +72,34 @@ class TestTrackingMPC(TestCase):
         print(x_dot_est)
         self.assertTrue(np.abs(x_dot_est - x_dot_true) < tol)
         self.assertTrue(np.abs(z_dot_est - z_dot_true) < tol)
+
+    def test_min_time_nom(self):
+        """
+        Test when fe_max is large (i.e. mass constraint has to be activated), and when fe_max is large
+        (mass constraint remains inactive).
+        """
+        bc = {'x0': 0.,
+              'x_dot0': 0.,
+              'z0': 0.,
+              'z_dot0': 0.,
+              'xT': 20_000.,
+              'zT': 10_000.}
+
+        fe_max = 10_000.
+        result = min_time_nom(bc, fe_max)
+        print("fe_max=10_000: ")
+        print("fe: ", result.x[0])
+        print("th: ", result.x[1])
+        print("T: ", result.x[2])
+        print("---------------")
+        tol = 1e-5
+        self.assertTrue(np.abs(result.x[0]*result.x[2]*const.ALPHA - const.MASS_FUEL) < tol)
+
+        fe_max = 4000.
+        result = min_time_nom(bc, fe_max)
+        print("fe_max=4000: ")
+        print("fe: ", result.x[0])
+        print("th: ", result.x[1])
+        print("T: ", result.x[2])
+        print("---------------")
+        self.assertTrue(np.abs(result.x[0] - fe_max) < tol)
