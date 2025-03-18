@@ -93,6 +93,68 @@ def jac(fe, th, bc):
                      [dgz_dfe, dgz_dth]])
 
 
+def min_time_nom(bc, fe_max):
+    """
+    Solves for the parameters of the nominal trajectory with the minimum hit-to-kill time
+    given boundary conditions 'bc'.
+
+    Parameters:
+    ----------
+    bc : Dict
+        A dictionary containing boundary conditions for the nominal trajectory. Contains keys-values
+        'x0' : x position at time 0.
+        'x_dot0' : x velocity at time 0.
+        'z0' : z position at time 0.
+        'z_dot0' : z velocity at time 0.
+        'xT' : x position at time T.
+        'zT' : z position at time T.
+
+    fe_max : float
+        The maximum thrust of the missile. Used for constraints.
+
+    Returns:
+    -------
+    ndarray
+        'Fe', 'theta', and 'T'.
+    """
+    m0 = const.MASS
+    m_fuel = const.MASS_FUEL
+    g = const.GRAVITY
+    alpha = const.ALPHA
+
+    def objective(var):
+        _, _, T = var
+        return T
+
+    def x_hit_constraint(var):
+        fe, th, T = var
+        c_x = bc['x_dot0'] + (1 / alpha) * np.log(m0) * np.sin(th)
+        d_x = bc['x0'] - m0 / (alpha ** 2 * fe) * np.log(m0) * np.sin(th)
+        xT = bc['xT']
+        constr = -(1/alpha)*np.sin(th)*(T-m0/(alpha*fe))*np.log(m0 - alpha*fe*T) + T/alpha*np.sin(th) + c_x*T + d_x - xT
+        return constr
+
+    def z_hit_constraint(var):
+        fe, th, T = var
+        c_z = bc['z_dot0'] + (1 / alpha) * np.log(m0) * np.cos(th)
+        d_z = bc['z0'] - m0 / (alpha ** 2 * fe) * np.log(m0) * np.cos(th)
+        zT = bc['zT']
+        constr = (-(1/alpha)*np.cos(th)*(T-m0/(alpha*fe))*np.log(m0 - alpha*fe*T) + T/alpha*np.cos(th) -
+                  (1/2)*g*T**2 + c_z*T + d_z - zT)
+        return constr
+
+    def fuel_constraint(var):
+        fe, th, T = var
+        return m_fuel/alpha - fe*T
+
+    constraints = [{'type': 'eq', 'fun': lambda var: x_hit_constraint(var)},
+                   {'type': 'eq', 'fun': lambda var: z_hit_constraint(var)},
+                   {'type': 'ineq', 'fun': lambda var: fuel_constraint(var)}]
+    bounds = [(0, fe_max), (0, 2*np.pi), (0, None)]
+    init_guess = np.array([4000., np.pi/4, 40.])
+    result = optimize.minimize(objective, init_guess, method='SLSQP', constraints=constraints, bounds=bounds)
+
+
 def nom_state(t, fe, th, bc):
     m0 = const.MASS
     g = const.GRAVITY
