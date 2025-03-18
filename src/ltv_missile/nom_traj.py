@@ -150,7 +150,7 @@ def min_time_nom(bc, fe_max):
     constraints = [{'type': 'eq', 'fun': lambda var: x_hit_constraint(var)},
                    {'type': 'eq', 'fun': lambda var: z_hit_constraint(var)},
                    {'type': 'ineq', 'fun': lambda var: fuel_constraint(var)}]
-    bounds = [(0, fe_max), (0, 2*np.pi), (0, None)]
+    bounds = [(0, fe_max), (-np.pi/2, np.pi/2), (0, None)]
     init_guess = np.array([4000., np.pi/4, 40.])
     result = optimize.minimize(objective, init_guess, method='SLSQP', constraints=constraints, bounds=bounds)
     return result
