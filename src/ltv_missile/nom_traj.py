@@ -156,6 +156,85 @@ def min_time_nom(bc, fe_max):
     return result
 
 
+def min_time_nom_moving_targ(bc, bc_targ, fe_max):
+    """
+    Solves for the parameters of the nominal trajectory with the minimum hit-to-kill time.
+    This function assumes the airborne target is following a parabolic path.
+
+    Parameters:
+    ----------
+    bc : Dict
+        A dictionary containing boundary conditions for the nominal trajectory. Contains keys-values
+        'x0' : x position at time 0.
+        'x_dot0' : x velocity at time 0.
+        'z0' : z position at time 0.
+        'z_dot0' : z velocity at time 0.
+
+    bc_targ : Dict
+        A dictionary containing boundary conditions for the airborne target. Contains keys-values
+        'x0' : x position at time 0.
+        'x_dot0' : x velocity at time 0.
+        'z0' : z position at time 0.
+        'z_dot0' : z velocity at time 0.
+
+    fe_max : float
+        The maximum thrust of the missile. Used for constraints.
+
+    Returns:
+    -------
+    ndarray
+        'Fe', 'theta', and 'T'.
+    """
+    m0 = const.MASS
+    m_fuel = const.MASS_FUEL
+    g = const.GRAVITY
+    alpha = const.ALPHA
+
+    # Params for target model
+    c_x_targ = bc_targ['x_dot0']
+    d_x_targ = bc_targ['x0']
+    c_z_targ = bc_targ['z_dot0']
+    d_z_targ = bc_targ['z0']
+
+    def x_targ_pos(t):
+        return c_x_targ*t + d_x_targ
+
+    def z_targ_pos(t):
+        return -(g/2)*t**2 + c_z_targ*t + d_z_targ
+
+    def objective(var):
+        _, _, T = var
+        return T
+
+    def x_hit_constraint(var):
+        fe, th, T = var
+        c_x = bc['x_dot0'] + (1 / alpha) * np.log(m0) * np.sin(th)
+        d_x = bc['x0'] - m0 / (alpha ** 2 * fe) * np.log(m0) * np.sin(th)
+        constr = (-(1/alpha) * np.sin(th) * (T - m0/(alpha*fe)) * np.log(m0 - alpha*fe*T) + T/alpha*np.sin(th) +
+                  c_x*T + d_x - x_targ_pos(T))
+        return constr
+
+    def z_hit_constraint(var):
+        fe, th, T = var
+        c_z = bc['z_dot0'] + (1 / alpha) * np.log(m0) * np.cos(th)
+        d_z = bc['z0'] - m0 / (alpha ** 2 * fe) * np.log(m0) * np.cos(th)
+        constr = (-(1/alpha) * np.cos(th) * (T - m0/(alpha*fe)) * np.log(m0 - alpha*fe*T) + T/alpha*np.cos(th) -
+                  (1/2)*g*T**2 + c_z*T + d_z - z_targ_pos(T))
+        return constr
+
+    def fuel_constraint(var):
+        fe, th, T = var
+        return m_fuel / alpha - fe * T
+
+    constraints = [{'type': 'eq', 'fun': lambda var: x_hit_constraint(var)},
+                   {'type': 'eq', 'fun': lambda var: z_hit_constraint(var)},
+                   {'type': 'ineq', 'fun': lambda var: fuel_constraint(var)}]
+    bounds = [(0, fe_max), (-np.pi / 2, np.pi / 2), (0, None)]
+    init_guess = np.array([4000., np.pi / 4, 40.])
+    result = optimize.minimize(objective, init_guess, method='SLSQP', constraints=constraints, bounds=bounds)
+    return result
+
+
 def nom_state(t, fe, th, bc):
     m0 = const.MASS
     g = const.GRAVITY
