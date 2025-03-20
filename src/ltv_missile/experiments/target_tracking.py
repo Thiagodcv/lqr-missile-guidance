@@ -13,7 +13,7 @@ import os
 
 def experiment():
     # In seconds
-    n_sec = 60.
+    n_sec = 30.
     track_strt_time = 10.
     update_lqr_freq = 0.2
     # In Hertz
@@ -62,6 +62,10 @@ def experiment():
     init_state = np.array([0., 0., 0., 0., th0, 0., m0])
     fe_max = 5000.
 
+    # Define array for saving state history of rocket
+    state_history = np.tile(init_state, (int(track_strt_time * fps + 1), 1))
+
+    # Simulate
     init_guess = None
     missile_state = init_state
     for ts in range(int(track_strt_time/update_lqr_freq), int(n_sec/update_lqr_freq)):
@@ -95,6 +99,12 @@ def experiment():
         t_span = np.linspace(0., update_lqr_freq, num=int(fps*update_lqr_freq + 1))
         sol = sdeint.itoint(dyn_inner, G, missile_state, t_span)
         missile_state = sol[-1, :]  # sol[-1, :] is state evaluated at endpoint
+
+        # Save state history
+        state_history = np.concatenate((state_history, sol[1:, :]), axis=0)
+
+    print('state_history.shape: ', state_history.shape)
+    print('result.shape: ', result.shape)
 
 
 def simulate_target(cx, cz, dx, dz, n_sec, fps=100):
@@ -131,7 +141,7 @@ def simulate_target(cx, cz, dx, dz, n_sec, fps=100):
 
     # Matrix for diffusion term
     sig_x = 10.
-    sig_z = 1.
+    sig_z = 0.
     B_targ = np.zeros((4, 4))
     B_targ[2, 2] = sig_x
     B_targ[3, 3] = sig_z
