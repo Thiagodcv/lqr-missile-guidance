@@ -156,7 +156,7 @@ def min_time_nom(bc, fe_max):
     return result
 
 
-def min_time_nom_moving_targ(bc, bc_targ, fe_max):
+def min_time_nom_moving_targ(bc, bc_targ, fe_max, init_guess=None):
     """
     Solves for the parameters of the nominal trajectory with the minimum hit-to-kill time.
     This function assumes the airborne target is following a parabolic path.
@@ -230,7 +230,8 @@ def min_time_nom_moving_targ(bc, bc_targ, fe_max):
                    {'type': 'eq', 'fun': lambda var: z_hit_constraint(var)},
                    {'type': 'ineq', 'fun': lambda var: fuel_constraint(var)}]
     bounds = [(0, fe_max), (-np.pi / 2, np.pi / 2), (0, None)]
-    init_guess = np.array([4000., np.pi / 4, 40.])
+    if init_guess is None:
+        init_guess = np.array([4000., np.pi / 4, 40.])
     result = optimize.minimize(objective, init_guess, method='SLSQP', constraints=constraints, bounds=bounds)
     return result
 
