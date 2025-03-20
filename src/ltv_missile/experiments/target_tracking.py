@@ -70,8 +70,8 @@ def experiment():
                       'z_dot0': missile_state[3]}
 
         targ_bc = {'x0': targ_state[0],
-                   'x_dot0': targ_state[1],
-                   'z0': targ_state[2],
+                   'x_dot0': targ_state[2],
+                   'z0': targ_state[1],
                    'z_dot0': targ_state[3]}
 
         nom_traj_params = min_time_nom_moving_targ(missile_bc, targ_bc, fe_max, init_guess=init_guess)
