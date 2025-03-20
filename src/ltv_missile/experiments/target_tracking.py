@@ -94,7 +94,7 @@ def experiment():
         dyn_inner = lambda x, t: dyn(x, t, fe_nom, th_nom, missile_bc, nom_input, S_interp)
         t_span = np.linspace(0., update_lqr_freq, num=int(fps*update_lqr_freq + 1))
         sol = sdeint.itoint(dyn_inner, G, missile_state, t_span)
-        missile_state = sol[-1, :]
+        missile_state = sol[-1, :]  # sol[-1, :] is state evaluated at endpoint
 
 
 def simulate_target(cx, cz, dx, dz, n_sec, fps=100):
