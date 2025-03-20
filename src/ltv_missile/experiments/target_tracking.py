@@ -12,8 +12,11 @@ import os
 
 
 def experiment():
+    # In seconds
     n_sec = 60.
     track_strt_time = 10.
+    update_lqr_freq = 0.2
+    # In Hertz
     fps = 100
     result = simulate_target(cx=-300., cz=300., dx=10_000., dz=0., n_sec=n_sec, fps=fps)
 
@@ -61,8 +64,8 @@ def experiment():
 
     init_guess = None
     missile_state = init_state
-    for sec in range(int(track_strt_time), int(n_sec)):
-        targ_state = result[sec*fps, :]
+    for sec in range(int(track_strt_time/update_lqr_freq), int(n_sec/update_lqr_freq)):
+        targ_state = result[sec*int(fps*update_lqr_freq), :]
 
         missile_bc = {'x0': missile_state[0],
                       'x_dot0': missile_state[1],
@@ -80,7 +83,7 @@ def experiment():
         nom_input = np.array([fe_nom, 0., 0.])
         S_interp = get_S_interp(Q, Q, R, fe_nom, th_nom, T_nom)
 
-        print('sec: ', sec)
+        print('sec: ', sec*update_lqr_freq)
         print('missile_state: ', missile_state)
         print('targ_state: ', targ_state)
         print('fe_nom: ', fe_nom)
@@ -89,7 +92,7 @@ def experiment():
         print('----------------')
 
         dyn_inner = lambda x, t: dyn(x, t, fe_nom, th_nom, missile_bc, nom_input, S_interp)
-        t_span = np.linspace(0., 1., num=fps)
+        t_span = np.linspace(0., update_lqr_freq, num=int(fps*update_lqr_freq))
         sol = sdeint.itoint(dyn_inner, G, missile_state, t_span)
         missile_state = sol[-1, :]
 
