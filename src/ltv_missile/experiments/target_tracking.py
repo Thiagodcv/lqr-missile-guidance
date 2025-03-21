@@ -13,7 +13,7 @@ import os
 
 def experiment():
     # In seconds
-    n_sec = 30.
+    n_sec = 40
     track_strt_time = 10.
     update_lqr_freq = 0.2
     # In Hertz
@@ -64,6 +64,7 @@ def experiment():
 
     # Define array for saving state history of rocket
     state_history = np.tile(init_state, (int(track_strt_time * fps + 1), 1))
+    idx_from_end = -1
 
     # Simulate
     init_guess = None
@@ -103,8 +104,39 @@ def experiment():
         # Save state history
         state_history = np.concatenate((state_history, sol[1:, :]), axis=0)
 
+        # Evaluate termination condition
+        terminate, dist, idx_from_end = terminate_cond(sol[:-1, :],
+                                                       result[ts*int(fps*update_lqr_freq):(ts+1)*int(fps*update_lqr_freq), :])
+        if terminate:
+            print("Terminated with distance to target: {:.1f}m".format(dist))
+            break
+
     print('state_history.shape: ', state_history.shape)
     print('result.shape: ', result.shape)
+
+    x_m = state_history[:-idx_from_end, 0]
+    y_m = state_history[:-idx_from_end, 2]
+    episode_len = len(x_m)
+    plt.plot(x_m, y_m, linestyle='-', color='blue')
+
+    x_t = result[:episode_len, 0]
+    y_t = result[:episode_len, 1]
+    plt.plot(x_t, y_t, linestyle='-', color='orange')
+
+
+    plt.xlim(-5000, 12000)
+    plt.ylim(-2000, 7500)
+    plt.show()
+
+
+def terminate_cond(missile_states, targ_states, max_dist=10):
+    num_idx = missile_states.shape[0]
+    for i in range(num_idx):
+        dist = np.linalg.norm(missile_states[i, [0, 2]] - targ_states[i, [0, 1]])
+        if dist < max_dist:
+            return True, dist, num_idx - i
+
+    return False, -1, -1
 
 
 def simulate_target(cx, cz, dx, dz, n_sec, fps=100):
