@@ -129,7 +129,7 @@ def experiment():
     plt.show()
 
 
-def terminate_cond(missile_states, targ_states, max_dist=10):
+def terminate_cond(missile_states, targ_states, max_dist=5):
     num_idx = missile_states.shape[0]
     for i in range(num_idx):
         dist = np.linalg.norm(missile_states[i, [0, 2]] - targ_states[i, [0, 1]])
