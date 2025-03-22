@@ -1,6 +1,6 @@
 from unittest import TestCase
 import numpy as np
-from ltv_missile.nom_traj import func, jac, nom_traj_params, nom_state, min_time_nom
+from ltv_missile.nom_traj import func, jac, nom_traj_params, nom_state, min_time_nom, min_time_nom_moving_targ
 import constants as const
 
 
@@ -103,3 +103,37 @@ class TestTrackingMPC(TestCase):
         print("T: ", result.x[2])
         print("---------------")
         self.assertTrue(np.abs(result.x[0] - fe_max) < tol)
+
+    def test_min_time_nom_moving_targ(self):
+        bc = {'x0': 0.,
+              'x_dot0': 0.,
+              'z0': 0.,
+              'z_dot0': 0.}
+
+        bc_targ = {'x0': 10_000.,
+                   'x_dot0': -300.,
+                   'z0': 0.,
+                   'z_dot0': 300.}
+
+        fe_max = 10_000.
+        result = min_time_nom_moving_targ(bc, bc_targ, fe_max)
+        print("fe_max=10_000: ")
+        print("fe: ", result.x[0])
+        print("th: ", result.x[1])
+        print("T: ", result.x[2])
+        print("collision x: ", bc_targ['x_dot0']*result.x[2] + bc_targ['x0'])
+        print("collision z: ", -(const.GRAVITY/2)*result.x[2]**2 + bc_targ['z_dot0']*result.x[2] + bc_targ['z0'])
+        print("---------------")
+        tol = 1e-5
+        # self.assertTrue(np.abs(result.x[0] * result.x[2] * const.ALPHA - const.MASS_FUEL) < tol)
+
+        fe_max = 4000.
+        result = min_time_nom_moving_targ(bc, bc_targ, fe_max)
+        print("fe_max=4000: ")
+        print("fe: ", result.x[0])
+        print("th: ", result.x[1])
+        print("T: ", result.x[2])
+        print("collision x: ", bc_targ['x_dot0']*result.x[2] + bc_targ['x0'])
+        print("collision z: ", -(const.GRAVITY/2)*result.x[2]**2 + bc_targ['z_dot0']*result.x[2] + bc_targ['z0'])
+        print("---------------")
+        # self.assertTrue(np.abs(result.x[0] - fe_max) < tol)
