@@ -9,6 +9,7 @@ import sdeint
 from matplotlib import pyplot as plt
 import matplotlib.animation as animation
 import os
+import pickle
 from datetime import datetime
 
 
@@ -117,7 +118,8 @@ def experiment():
             break
 
     episode_len = len(state_history[:-idx_from_end, 0])
-    export_to_mp4(state_history, result, episode_len, fps, run_name)
+    # export_to_mp4(state_history, result, episode_len, fps, run_name)
+    pickle_run(state_history[:episode_len, :], result[:episode_len, :], run_name)
 
 
 def terminate_cond(missile_states, targ_states, max_dist=5):
@@ -128,6 +130,12 @@ def terminate_cond(missile_states, targ_states, max_dist=5):
             return True, dist, num_idx - i
 
     return False, -1, -1
+
+
+def pickle_run(missile_hist, targ_hist, run_name):
+    data = {"missile_hist": missile_hist, "targ_hist": targ_hist}
+    with open(os.getcwd() + "/saved_runs/" + run_name + ".pkl", "wb") as f:
+        pickle.dump(data, f)
 
 
 def export_to_mp4(missile_hist, targ_hist, episode_len, fps, run_name):
