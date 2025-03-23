@@ -159,7 +159,7 @@ def export_to_mp4(missile_hist, targ_hist, episode_len, fps):
                                   init_func=init,
                                   interval=1,
                                   blit=True)
-    ani.save("animation.mp4", writer="ffmpeg", fps=int(2.5 * fps))
+    ani.save(os.getcwd() + "/media/animation.mp4", writer="ffmpeg", fps=int(2.5 * fps))
     plt.show()
 
 
