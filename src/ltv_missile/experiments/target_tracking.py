@@ -151,9 +151,18 @@ def experiment():
         target_traj.set_data(xdata_t, zdata_t)
         return missile_traj, target_traj
 
-    ani = animation.FuncAnimation(fig=fig, func=update, frames=episode_len, init_func=init, interval=20)
-    ani.save("animation.gif", writer="pillow")
-    plt.legend()
+    # Some modifications to the graph
+    ax.axhline(0, color='black', linestyle='--')
+    ax.plot(0, 0, 'go', label='Launch Position')
+    ax.legend()
+
+    ani = animation.FuncAnimation(fig=fig,
+                                  func=update,
+                                  frames=episode_len,
+                                  init_func=init,
+                                  interval=1,
+                                  blit=True)
+    ani.save("animation.mp4", writer="ffmpeg", fps=int(2.5*fps))
     plt.show()
 
 
