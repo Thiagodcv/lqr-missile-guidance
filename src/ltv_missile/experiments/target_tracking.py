@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.integrate import solve_ivp
+from src.utils import export_multiple_to_mp4
 from src.ltv_missile.dynamics import f
 from src.ltv_missile.lqr import A_nom, B_nom, get_S_interp, S
 from src.ltv_missile.nom_traj import min_time_nom_moving_targ, nom_state
@@ -226,5 +227,17 @@ def simulate_target(cx, cz, dx, dz, n_sec, fps=100):
     return result
 
 
+def export_past_runs():
+    run_names = ["2025_03_23_16_05_33.pkl",
+                 "2025_03_23_16_11_55.pkl",
+                 "2025_03_23_16_12_13.pkl"]
+    pkl_ls = []
+    for pkl in run_names:
+        with open(os.getcwd() + "/saved_runs/" + pkl, "rb") as f:
+            pkl_ls.append(pickle.load(f))
+    export_multiple_to_mp4(pkl_ls)
+
+
 if __name__ == '__main__':
-    experiment()
+    # experiment()
+    export_past_runs()
