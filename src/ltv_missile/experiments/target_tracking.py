@@ -111,21 +111,49 @@ def experiment():
             print("Terminated with distance to target: {:.1f}m".format(dist))
             break
 
-    print('state_history.shape: ', state_history.shape)
-    print('result.shape: ', result.shape)
+    # print('state_history.shape: ', state_history.shape)
+    # print('result.shape: ', result.shape)
+    #
+    # x_m = state_history[:-idx_from_end, 0]
+    # y_m = state_history[:-idx_from_end, 2]
+    # episode_len = len(x_m)
+    # plt.plot(x_m, y_m, linestyle='-', color='blue')
+    #
+    # x_t = result[:episode_len, 0]
+    # y_t = result[:episode_len, 1]
+    # plt.plot(x_t, y_t, linestyle='-', color='orange')
+    #
+    #
+    # plt.xlim(-5000, 12000)
+    # plt.ylim(-2000, 7500)
+    # plt.show()
 
-    x_m = state_history[:-idx_from_end, 0]
-    y_m = state_history[:-idx_from_end, 2]
-    episode_len = len(x_m)
-    plt.plot(x_m, y_m, linestyle='-', color='blue')
+    episode_len = len(state_history[:-idx_from_end, 0])
+    fig, ax = plt.subplots()
+    ax.set_xlim(-5000, 12000)
+    ax.set_ylim(-2000, 7500)
 
-    x_t = result[:episode_len, 0]
-    y_t = result[:episode_len, 1]
-    plt.plot(x_t, y_t, linestyle='-', color='orange')
+    missile_traj, = ax.plot([], [], lw=2, label="Missile")
+    target_traj, = ax.plot([], [], lw=2, label="Target")
 
+    def init():
+        missile_traj.set_data([], [])
+        target_traj.set_data([], [])
+        return missile_traj, target_traj
 
-    plt.xlim(-5000, 12000)
-    plt.ylim(-2000, 7500)
+    def update(frame):
+        xdata_m = state_history[:frame + 1, 0]
+        zdata_m = state_history[:frame + 1, 2]
+        missile_traj.set_data(xdata_m, zdata_m)
+
+        xdata_t = result[:frame + 1, 0]
+        zdata_t = result[:frame + 1, 1]
+        target_traj.set_data(xdata_t, zdata_t)
+        return missile_traj, target_traj
+
+    ani = animation.FuncAnimation(fig=fig, func=update, frames=episode_len, init_func=init, interval=20)
+    ani.save("animation.gif", writer="pillow")
+    plt.legend()
     plt.show()
 
 
