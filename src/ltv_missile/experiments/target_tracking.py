@@ -9,9 +9,14 @@ import sdeint
 from matplotlib import pyplot as plt
 import matplotlib.animation as animation
 import os
+from datetime import datetime
 
 
 def experiment():
+    # Tag simulation by current time
+    now = datetime.now()
+    run_name = now.strftime("%Y_%m_%d_%H_%M_%S")
+
     # In seconds
     n_sec = 40
     track_strt_time = 10.
@@ -112,7 +117,7 @@ def experiment():
             break
 
     episode_len = len(state_history[:-idx_from_end, 0])
-    export_to_mp4(state_history, result, episode_len, fps)
+    export_to_mp4(state_history, result, episode_len, fps, run_name)
 
 
 def terminate_cond(missile_states, targ_states, max_dist=5):
@@ -125,7 +130,7 @@ def terminate_cond(missile_states, targ_states, max_dist=5):
     return False, -1, -1
 
 
-def export_to_mp4(missile_hist, targ_hist, episode_len, fps):
+def export_to_mp4(missile_hist, targ_hist, episode_len, fps, run_name):
     fig, ax = plt.subplots()
     ax.set_xlim(-5000, 12000)
     ax.set_ylim(-2000, 7500)
@@ -159,7 +164,7 @@ def export_to_mp4(missile_hist, targ_hist, episode_len, fps):
                                   init_func=init,
                                   interval=1,
                                   blit=True)
-    ani.save(os.getcwd() + "/media/animation.mp4", writer="ffmpeg", fps=int(2.5 * fps))
+    ani.save(os.getcwd() + "/media/" + run_name + ".mp4", writer="ffmpeg", fps=int(2.5 * fps))
     plt.show()
 
 
