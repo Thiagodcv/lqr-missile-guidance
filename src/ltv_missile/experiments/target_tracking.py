@@ -111,24 +111,21 @@ def experiment():
             print("Terminated with distance to target: {:.1f}m".format(dist))
             break
 
-    # print('state_history.shape: ', state_history.shape)
-    # print('result.shape: ', result.shape)
-    #
-    # x_m = state_history[:-idx_from_end, 0]
-    # y_m = state_history[:-idx_from_end, 2]
-    # episode_len = len(x_m)
-    # plt.plot(x_m, y_m, linestyle='-', color='blue')
-    #
-    # x_t = result[:episode_len, 0]
-    # y_t = result[:episode_len, 1]
-    # plt.plot(x_t, y_t, linestyle='-', color='orange')
-    #
-    #
-    # plt.xlim(-5000, 12000)
-    # plt.ylim(-2000, 7500)
-    # plt.show()
-
     episode_len = len(state_history[:-idx_from_end, 0])
+    export_to_mp4(state_history, result, episode_len, fps)
+
+
+def terminate_cond(missile_states, targ_states, max_dist=5):
+    num_idx = missile_states.shape[0]
+    for i in range(num_idx):
+        dist = np.linalg.norm(missile_states[i, [0, 2]] - targ_states[i, [0, 1]])
+        if dist < max_dist:
+            return True, dist, num_idx - i
+
+    return False, -1, -1
+
+
+def export_to_mp4(missile_hist, targ_hist, episode_len, fps):
     fig, ax = plt.subplots()
     ax.set_xlim(-5000, 12000)
     ax.set_ylim(-2000, 7500)
@@ -142,12 +139,12 @@ def experiment():
         return missile_traj, target_traj
 
     def update(frame):
-        xdata_m = state_history[:frame + 1, 0]
-        zdata_m = state_history[:frame + 1, 2]
+        xdata_m = missile_hist[:frame + 1, 0]
+        zdata_m = missile_hist[:frame + 1, 2]
         missile_traj.set_data(xdata_m, zdata_m)
 
-        xdata_t = result[:frame + 1, 0]
-        zdata_t = result[:frame + 1, 1]
+        xdata_t = targ_hist[:frame + 1, 0]
+        zdata_t = targ_hist[:frame + 1, 1]
         target_traj.set_data(xdata_t, zdata_t)
         return missile_traj, target_traj
 
@@ -162,18 +159,8 @@ def experiment():
                                   init_func=init,
                                   interval=1,
                                   blit=True)
-    ani.save("animation.mp4", writer="ffmpeg", fps=int(2.5*fps))
+    ani.save("animation.mp4", writer="ffmpeg", fps=int(2.5 * fps))
     plt.show()
-
-
-def terminate_cond(missile_states, targ_states, max_dist=5):
-    num_idx = missile_states.shape[0]
-    for i in range(num_idx):
-        dist = np.linalg.norm(missile_states[i, [0, 2]] - targ_states[i, [0, 1]])
-        if dist < max_dist:
-            return True, dist, num_idx - i
-
-    return False, -1, -1
 
 
 def simulate_target(cx, cz, dx, dz, n_sec, fps=100):
