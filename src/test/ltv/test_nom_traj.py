@@ -4,7 +4,7 @@ from ltv_missile.nom_traj import func, jac, nom_traj_params, nom_state, min_time
 import constants as const
 
 
-class TestTrackingMPC(TestCase):
+class TestLTVNomTraj(TestCase):
 
     def setUp(self):
         pass
