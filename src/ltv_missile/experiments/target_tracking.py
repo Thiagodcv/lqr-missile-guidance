@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.integrate import solve_ivp
+from src.utils import export_multiple_to_mp4
 from src.ltv_missile.dynamics import f
 from src.ltv_missile.lqr import A_nom, B_nom, get_S_interp, S
 from src.ltv_missile.nom_traj import min_time_nom_moving_targ, nom_state
@@ -9,9 +10,15 @@ import sdeint
 from matplotlib import pyplot as plt
 import matplotlib.animation as animation
 import os
+import pickle
+from datetime import datetime
 
 
 def experiment():
+    # Tag simulation by current time
+    now = datetime.now()
+    run_name = now.strftime("%Y_%m_%d_%H_%M_%S")
+
     # In seconds
     n_sec = 40
     track_strt_time = 10.
@@ -111,22 +118,9 @@ def experiment():
             print("Terminated with distance to target: {:.1f}m".format(dist))
             break
 
-    print('state_history.shape: ', state_history.shape)
-    print('result.shape: ', result.shape)
-
-    x_m = state_history[:-idx_from_end, 0]
-    y_m = state_history[:-idx_from_end, 2]
-    episode_len = len(x_m)
-    plt.plot(x_m, y_m, linestyle='-', color='blue')
-
-    x_t = result[:episode_len, 0]
-    y_t = result[:episode_len, 1]
-    plt.plot(x_t, y_t, linestyle='-', color='orange')
-
-
-    plt.xlim(-5000, 12000)
-    plt.ylim(-2000, 7500)
-    plt.show()
+    episode_len = len(state_history[:-idx_from_end, 0])
+    # export_to_mp4(state_history, result, episode_len, fps, run_name)
+    pickle_run(state_history[:episode_len, :], result[:episode_len, :], run_name)
 
 
 def terminate_cond(missile_states, targ_states, max_dist=5):
@@ -137,6 +131,50 @@ def terminate_cond(missile_states, targ_states, max_dist=5):
             return True, dist, num_idx - i
 
     return False, -1, -1
+
+
+def pickle_run(missile_hist, targ_hist, run_name):
+    data = {"missile_hist": missile_hist, "targ_hist": targ_hist}
+    with open(os.getcwd() + "/saved_runs/" + run_name + ".pkl", "wb") as f:
+        pickle.dump(data, f)
+
+
+def export_to_mp4(missile_hist, targ_hist, episode_len, fps, run_name):
+    fig, ax = plt.subplots()
+    ax.set_xlim(-5000, 12000)
+    ax.set_ylim(-2000, 7500)
+
+    missile_traj, = ax.plot([], [], lw=2, label="Missile")
+    target_traj, = ax.plot([], [], lw=2, label="Target")
+
+    def init():
+        missile_traj.set_data([], [])
+        target_traj.set_data([], [])
+        return missile_traj, target_traj
+
+    def update(frame):
+        xdata_m = missile_hist[:frame + 1, 0]
+        zdata_m = missile_hist[:frame + 1, 2]
+        missile_traj.set_data(xdata_m, zdata_m)
+
+        xdata_t = targ_hist[:frame + 1, 0]
+        zdata_t = targ_hist[:frame + 1, 1]
+        target_traj.set_data(xdata_t, zdata_t)
+        return missile_traj, target_traj
+
+    # Some modifications to the graph
+    ax.axhline(0, color='black', linestyle='--')
+    ax.plot(0, 0, 'go', label='Launch Position')
+    ax.legend()
+
+    ani = animation.FuncAnimation(fig=fig,
+                                  func=update,
+                                  frames=episode_len,
+                                  init_func=init,
+                                  interval=1,
+                                  blit=True)
+    ani.save(os.getcwd() + "/media/" + run_name + ".mp4", writer="ffmpeg", fps=int(2.5 * fps))
+    plt.show()
 
 
 def simulate_target(cx, cz, dx, dz, n_sec, fps=100):
@@ -189,5 +227,17 @@ def simulate_target(cx, cz, dx, dz, n_sec, fps=100):
     return result
 
 
+def export_past_runs():
+    run_names = ["2025_03_23_16_05_33.pkl",
+                 "2025_03_23_16_11_55.pkl",
+                 "2025_03_23_16_12_13.pkl"]
+    pkl_ls = []
+    for pkl in run_names:
+        with open(os.getcwd() + "/saved_runs/" + pkl, "rb") as f:
+            pkl_ls.append(pickle.load(f))
+    export_multiple_to_mp4(pkl_ls)
+
+
 if __name__ == '__main__':
-    experiment()
+    # experiment()
+    export_past_runs()
