@@ -4,7 +4,7 @@ from src.lti_missile.nom_traj import nom_traj_params, nom_state
 from src.constants import MASS, GRAVITY
 
 
-class TestTrackingMPC(TestCase):
+class TestLTINomTraj(TestCase):
 
     def setUp(self):
         pass
@@ -13,6 +13,9 @@ class TestTrackingMPC(TestCase):
         pass
 
     def test_nom_traj_params(self):
+        """
+        Test to ensure that the algorithm used in nom_traj_params() returns the correct roots.
+        """
         bc = {'x0': 0.,
               'x_dot0': 0.,
               'z0': 0.,
@@ -53,6 +56,9 @@ class TestTrackingMPC(TestCase):
         print(fun(sol))
 
     def test_generate_nom_traj(self):
+        """
+        Test to ensure computed nominal trajectory satisfies its boundary constraints.
+        """
         bc = {'x0': 0.,
               'x_dot0': 0.,
               'z0': 0.,

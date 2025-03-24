@@ -16,7 +16,7 @@ def f(s, u):
     Returns:
     -------
     ndarray
-        The time derivative of the state according to the system.
+        The time derivative of the state.
     """
     # Unravel state variables
     x, x_dot = s[0:2]

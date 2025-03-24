@@ -5,6 +5,22 @@ from scipy.interpolate import interp1d
 
 
 def A_nom(t, fe, th):
+    """
+    The time-varying A(t) matrix for the linearized model.
+
+    Parameters:
+    ----------
+    t: float
+        The time.
+    fe: float
+        The thrust exerted by the missile under the nominal trajectory.
+    th: float
+        The pitch angle of the missile under the nominal trajectory.
+
+    Returns:
+    -------
+    ndarray
+    """
     m = const.MASS - const.ALPHA * fe * t
     A = np.array([[0., 1., 0., 0., 0., 0., 0.],
                   [0., 0., 0., 0., fe/m*np.cos(th), 0., -(fe/m**2)*np.sin(th)],
@@ -17,6 +33,22 @@ def A_nom(t, fe, th):
 
 
 def B_nom(t, fe, th):
+    """
+    The time-varying B(t) matrix for the linearized model.
+
+    Parameters:
+    ----------
+    t: float
+        The time.
+    fe: float
+        The thrust exerted by the missile under the nominal trajectory.
+    th: float
+        The pitch angle of the missile under the nominal trajectory.
+
+    Returns:
+    -------
+    ndarray
+    """
     l1 = const.L1
     l2 = const.L2
     ln = const.Ln
@@ -35,6 +67,28 @@ def B_nom(t, fe, th):
 
 
 def F(t, S_flat, Q, R, fe, th):
+    """
+    The time-derivative of the S matrix according to its differential Riccati equation.
+
+    Parameters:
+    ----------
+    t: float
+        The time.
+    S_flat: ndarray
+        The (flattened) S matrix at time t.
+    Q: ndarray
+        The state cost within the LQR objective.
+    R: ndarray
+        The input cost within the LQR objective.
+    fe: float
+        The thrust exerted by the missile under the nominal trajectory.
+    th: float
+        The pitch angle of the missile under the nominal trajectory.
+
+    Returns:
+    -------
+    ndarray
+    """
     A = A_nom(t, fe, th)
     B = B_nom(t, fe, th)
     S = S_flat.reshape(A.shape)
@@ -45,6 +99,28 @@ def F(t, S_flat, Q, R, fe, th):
 
 
 def diff_riccati_eq(Q, Qf, R, fe, th, T_final):
+    """
+    Solve the Differential Riccati Equation and get S(t) evaluated at discrete points.
+
+    Parameters:
+    ----------
+    Q: ndarray
+        The state cost within the LQR objective.
+    Qf: ndarray
+        The terminal state cost within the LQR objective.
+    R: ndarray
+        The input cost within the LQR objective.
+    fe: float
+        The thrust exerted by the missile under the nominal trajectory.
+    th: float
+        The pitch angle of the missile under the nominal trajectory.
+    T_final: float
+        The final time; we solve for S(t) for t in [0, T_final].
+
+    Returns:
+    -------
+    Bunch object
+    """
     # F_wrap = lambda t, S: F(t, S, Q, R, fe, th)
     S_final = Qf.flatten()
 
@@ -54,6 +130,28 @@ def diff_riccati_eq(Q, Qf, R, fe, th, T_final):
 
 
 def get_S_interp(Q, Qf, R, fe, th, T_final):
+    """
+    Solve the Differential Riccati Equation and approximate S(t) using cubic splines.
+
+    Parameters:
+    ----------
+    Q: ndarray
+        The state cost within the LQR objective.
+    Qf: ndarray
+        The terminal state cost within the LQR objective.
+    R: ndarray
+        The input cost within the LQR objective.
+    fe: float
+        The thrust exerted by the missile under the nominal trajectory.
+    th: float
+        The pitch angle of the missile under the nominal trajectory.
+    T_final: float
+        The final time; we solve for S(t) for t in [0, T_final].
+
+    Returns:
+    -------
+    2D list of scipy.interpolate.interp1d objects
+    """
     # Get S(t) evaluated at finitely-many points in [0, T_final] via differential riccati equation
     sol = diff_riccati_eq(Q, Qf, R, fe, th, T_final)
     S_seq_inv = sol.y.T.reshape(-1, *Q.shape)
@@ -70,4 +168,20 @@ def get_S_interp(Q, Qf, R, fe, th, T_final):
 
 
 def S(t, interp, n):
+    """
+    Evaluate the S(t) matrix.
+
+    Parameters:
+    ----------
+    t: float
+        The time.
+    interp: 2D list of scipy.interpolate.interp1d objects
+        i.e., the n*n cubic splines which approximate S(t).
+    n: int
+        The dimension of the S(t) matrix.
+
+    Returns:
+    -------
+    ndarray
+    """
     return np.array([[interp[i][j](t) for j in range(n)] for i in range(n)])

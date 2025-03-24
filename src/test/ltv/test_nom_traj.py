@@ -4,7 +4,7 @@ from ltv_missile.nom_traj import func, jac, nom_traj_params, nom_state, min_time
 import constants as const
 
 
-class TestTrackingMPC(TestCase):
+class TestLTVNomTraj(TestCase):
 
     def setUp(self):
         pass
@@ -13,6 +13,10 @@ class TestTrackingMPC(TestCase):
         pass
 
     def test_nom_traj_params(self):
+        """
+        Test to ensure boundary conditions of nominal trajectory are met, and that the Jacobian of the root function
+        used in computing the nominal trajectory is accurate.
+        """
         bc = {'x0': 0.,
               'x_dot0': 0.,
               'z0': 0.,
@@ -46,6 +50,9 @@ class TestTrackingMPC(TestCase):
         self.assertTrue(np.allclose(nom_pos_T, targ_pos_T, rtol=tol, atol=tol))
 
     def test_nom_state(self):
+        """
+        Test to see if derivatives of x and z returned by nom_state are accurate.
+        """
         bc = {'x0': 0,
               'x_dot0': 0,
               'z0': 0,
@@ -105,6 +112,10 @@ class TestTrackingMPC(TestCase):
         self.assertTrue(np.abs(result.x[0] - fe_max) < tol)
 
     def test_min_time_nom_moving_targ(self):
+        """
+        Test to see if min_time_nom_moving_target returns the correct roots and satisfies constraints (i.e.,
+        finite fuel).
+        """
         bc = {'x0': 0.,
               'x_dot0': 0.,
               'z0': 0.,

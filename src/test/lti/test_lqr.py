@@ -40,6 +40,9 @@ class TestLTILQR(TestCase):
         self.assertTrue(np.allclose(B, B_test, atol=tol, rtol=tol))
 
     def test_S(self):
+        """
+        Test to ensure Algebraic Riccati Equation is solved correctly.
+        """
         fe = 5400
         th = np.pi/4
 

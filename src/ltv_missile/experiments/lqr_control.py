@@ -1,14 +1,16 @@
 import numpy as np
-from scipy.integrate import solve_ivp
+import sdeint
 from src.ltv_missile.dynamics import f
 from src.ltv_missile.lqr import A_nom, B_nom, get_S_interp, S
 from src.ltv_missile.nom_traj import nom_traj_params, nom_state
 import constants as const
 from src.utils import plot_dynamics
-import sdeint
 
 
 def experiment():
+    """
+    Control a missile with decaying mass and with the presence of noise using finite-horizon LQR.
+    """
 
     # Set desired target and terminal time
     bc = {'x0': 0,
@@ -46,6 +48,7 @@ def experiment():
     # Get S matrix estimate based on cubic splines
     S_interp = get_S_interp(Q, Q, R, fe_nom, th_nom, bc['T'])
 
+    # Define functions needed for SDE simulation
     def opt_u(x, t):
         # Compute LQR control input
         K = R_inv @ B_nom(t, fe_nom, th_nom).T @ S(t, S_interp, n)
@@ -65,6 +68,7 @@ def experiment():
     def G(x, t):
         return G_mat
 
+    # Set initial conditions and run simulation
     th0 = np.pi/8
     m0 = const.MASS
     init_state = np.array([0., 0., 0., 0., th0, 0., m0])

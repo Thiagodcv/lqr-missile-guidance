@@ -22,7 +22,7 @@ def nom_traj_params(bc):
     Returns:
     -------
     dict
-        'Fe' and 'theta' parameters of the nominal trajectory.
+        'fe' and 'theta' parameters of the nominal trajectory.
     """
     def func_wrap(x):
         fe = x[0]
@@ -40,6 +40,22 @@ def nom_traj_params(bc):
 
 
 def func(fe, th, bc):
+    """
+    The function used for root-finding in nom_traj_params().
+
+    Parameters:
+    ----------
+    fe: float
+        The thrust of the missile.
+    th: float
+        The pitch angle of the missile.
+    bc: dict
+        Defined in nom_traj_params().
+
+    Returns:
+    -------
+    ndarray
+    """
     m0 = const.MASS
     g = const.GRAVITY
     alpha = const.ALPHA
@@ -60,6 +76,22 @@ def func(fe, th, bc):
 
 
 def jac(fe, th, bc):
+    """
+    The Jacobian of the function used for root-finding in nom_traj_params().
+
+    Parameters:
+    ----------
+    fe: float
+        The thrust of the missile.
+    th: float
+        The pitch angle of the missile.
+    bc: dict
+        Defined in nom_traj_params().
+
+    Returns:
+    -------
+    ndarray
+    """
     m0 = const.MASS
     alpha = const.ALPHA
     T = bc['T']
@@ -95,7 +127,7 @@ def jac(fe, th, bc):
 
 def min_time_nom(bc, fe_max):
     """
-    Solves for the parameters of the nominal trajectory with the minimum hit-to-kill time
+    Solves for the parameters of the nominal trajectory with the minimum intercept time
     given boundary conditions 'bc'.
 
     Parameters:
@@ -115,7 +147,7 @@ def min_time_nom(bc, fe_max):
     Returns:
     -------
     ndarray
-        'Fe', 'theta', and 'T'.
+        'fe', 'theta', and 'T' parameters of the nominal trajectory (T is the intercept time).
     """
     m0 = const.MASS
     m_fuel = const.MASS_FUEL
@@ -237,6 +269,25 @@ def min_time_nom_moving_targ(bc, bc_targ, fe_max, init_guess=None):
 
 
 def nom_state(t, fe, th, bc):
+    """
+    The state vector evaluated at time t along a nominal trajectory where the missile experiences thrust 'fe' and
+    pitch angle 'th'.
+
+    Parameters:
+    ----------
+    t: float
+        The time.
+    fe: float
+        The thrust of the missile.
+    th: float
+        The pitch angle of the missile.
+    bc: dict
+        Defined in nom_traj_params().
+
+    Returns:
+    -------
+    ndarray
+    """
     m0 = const.MASS
     g = const.GRAVITY
     alpha = const.ALPHA
