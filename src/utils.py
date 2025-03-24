@@ -102,6 +102,8 @@ def export_multiple_to_mp4(pickle_data):
 
     missile_traj_ls = [ax.plot([], [], lw=2, color="blue")[0] for _ in range(num_pairs)]
     target_traj_ls = [ax.plot([], [], lw=2, color="orange")[0] for _ in range(num_pairs)]
+    missile_traj_ls[0] = ax.plot([], [], lw=2, color="blue", label="Missile")[0]
+    target_traj_ls[0] = ax.plot([], [], lw=2, color="orange", label="Target")[0]
 
     def init():
         for ep in range(num_pairs):
@@ -123,7 +125,7 @@ def export_multiple_to_mp4(pickle_data):
     # Some modifications to the graph
     ax.axhline(0, color='black', linestyle='--')
     ax.plot(0, 0, 'go', label='Launch Position')
-    # ax.legend()
+    ax.legend()
 
     ani = animation.FuncAnimation(fig=fig,
                                   func=update,
