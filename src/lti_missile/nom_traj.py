@@ -22,7 +22,7 @@ def nom_traj_params(bc):
     Returns:
     -------
     dict
-        'Fe' and 'theta' parameters of the nominal trajectory.
+        'fe' and 'theta' parameters of the nominal trajectory.
     """
     m = const.MASS
     g = const.GRAVITY
@@ -46,6 +46,25 @@ def nom_traj_params(bc):
 
 
 def nom_state(t, fe, th, bc):
+    """
+    The state vector evaluated at time t along a nominal trajectory where the missile experiences thrust 'fe' and
+    pitch angle 'th'.
+
+    Parameters:
+    ----------
+    t: float
+        The time.
+    fe: float
+        The thrust of the missile.
+    th: float
+        The pitch angle of the missile.
+    bc: dict
+        Defined in nom_traj_params().
+
+    Returns:
+    -------
+    ndarray
+    """
     m = const.MASS
     g = const.GRAVITY
 
