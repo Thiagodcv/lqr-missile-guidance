@@ -15,6 +15,7 @@ def nom_traj_params(bc):
         'x_dot0' : x velocity at time 0.
         'z0' : z position at time 0.
         'z_dot0' : z velocity at time 0.
+        'm0': mass at time 0.
         'T' : Amount of time until target reached.
         'xT' : x position at time T.
         'zT' : z position at time T.
@@ -56,7 +57,7 @@ def func(fe, th, bc):
     -------
     ndarray
     """
-    m0 = const.MASS
+    m0 = const.MASS if 'm0' not in bc else bc['m0']
     g = const.GRAVITY
     alpha = const.ALPHA
 
@@ -96,7 +97,7 @@ def jac(fe, th, bc):
     -------
     ndarray
     """
-    m0 = const.MASS
+    m0 = const.MASS if 'm0' not in bc else bc['m0']
     alpha = const.ALPHA
     g = const.GRAVITY
     T = bc['T']
@@ -153,6 +154,7 @@ def min_time_nom(bc, fe_max):
         'x_dot0' : x velocity at time 0.
         'z0' : z position at time 0.
         'z_dot0' : z velocity at time 0.
+        'm0': mass at time 0.
         'xT' : x position at time T.
         'zT' : z position at time T.
 
@@ -164,8 +166,8 @@ def min_time_nom(bc, fe_max):
     ndarray
         'fe', 'theta', and 'T' parameters of the nominal trajectory (T is the intercept time).
     """
-    m0 = const.MASS
-    m_fuel = const.MASS_FUEL
+    m0 = const.MASS if 'm0' not in bc else bc['m0']
+    m_fuel = m0 - const.MASS_DRY
     g = const.GRAVITY
     alpha = const.ALPHA
 
@@ -193,7 +195,7 @@ def min_time_nom(bc, fe_max):
 
     def fuel_constraint(var):
         fe, th, T = var
-        return m_fuel/alpha - fe*T
+        return (0.9*m_fuel)/alpha - fe*T
 
     constraints = [{'type': 'eq', 'fun': lambda var: x_hit_constraint(var)},
                    {'type': 'eq', 'fun': lambda var: z_hit_constraint(var)},
@@ -217,6 +219,7 @@ def min_time_nom_moving_targ(bc, bc_targ, fe_max, init_guess=None):
         'x_dot0' : x velocity at time 0.
         'z0' : z position at time 0.
         'z_dot0' : z velocity at time 0.
+        'm0': mass at time 0.
 
     bc_targ : Dict
         A dictionary containing boundary conditions for the airborne target. Contains keys-values
@@ -233,8 +236,8 @@ def min_time_nom_moving_targ(bc, bc_targ, fe_max, init_guess=None):
     ndarray
         'Fe', 'theta', and 'T'.
     """
-    m0 = const.MASS
-    m_fuel = const.MASS_FUEL
+    m0 = const.MASS if 'm0' not in bc else bc['m0']
+    m_fuel = m0 - const.MASS_DRY
     g = const.GRAVITY
     alpha = const.ALPHA
 
@@ -272,7 +275,7 @@ def min_time_nom_moving_targ(bc, bc_targ, fe_max, init_guess=None):
 
     def fuel_constraint(var):
         fe, th, T = var
-        return m_fuel / alpha - fe * T
+        return (0.9*m_fuel)/alpha - fe*T
 
     constraints = [{'type': 'eq', 'fun': lambda var: x_hit_constraint(var)},
                    {'type': 'eq', 'fun': lambda var: z_hit_constraint(var)},
@@ -304,7 +307,7 @@ def nom_state(t, fe, th, bc):
     -------
     ndarray
     """
-    m0 = const.MASS
+    m0 = const.MASS if 'm0' not in bc else bc['m0']
     g = const.GRAVITY
     alpha = const.ALPHA
 
