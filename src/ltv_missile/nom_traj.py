@@ -195,7 +195,7 @@ def min_time_nom(bc, fe_max):
 
     def fuel_constraint(var):
         fe, th, T = var
-        return (0.9*m_fuel)/alpha - fe*T
+        return (1.0*m_fuel)/alpha - fe*T
 
     constraints = [{'type': 'eq', 'fun': lambda var: x_hit_constraint(var)},
                    {'type': 'eq', 'fun': lambda var: z_hit_constraint(var)},
@@ -275,7 +275,7 @@ def min_time_nom_moving_targ(bc, bc_targ, fe_max, init_guess=None):
 
     def fuel_constraint(var):
         fe, th, T = var
-        return (0.9*m_fuel)/alpha - fe*T
+        return (1.0*m_fuel)/alpha - fe*T
 
     constraints = [{'type': 'eq', 'fun': lambda var: x_hit_constraint(var)},
                    {'type': 'eq', 'fun': lambda var: z_hit_constraint(var)},
