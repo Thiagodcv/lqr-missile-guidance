@@ -53,7 +53,7 @@ def experiment():
     # Define functions needed for SDE simulation
     def opt_u(x, t, fe_nom, th_nom, bc, nom_input, S_interp):
         # Compute LQR control input
-        K = R_inv @ B_nom(t, fe_nom, th_nom).T @ S(t, S_interp, n)
+        K = R_inv @ B_nom(t, fe_nom, th_nom, bc).T @ S(t, S_interp, n)
         dx = x - nom_state(t, fe_nom, th_nom, bc)
         u = -K @ dx + nom_input
         return u
@@ -101,7 +101,7 @@ def experiment():
         fe_nom, th_nom, T_nom = nom_traj_params.x
         init_guess = np.array([fe_nom, th_nom, T_nom])
         nom_input = np.array([fe_nom, 0., 0.])
-        S_interp = get_S_interp(Q, Q, R, fe_nom, th_nom, T_nom)
+        S_interp = get_S_interp(Q, Q, R, fe_nom, th_nom, T_nom, missile_bc)
 
         print('sec: ', ts*update_lqr_freq)
         print('missile_state: ', missile_state)
@@ -286,9 +286,9 @@ def export_past_runs():
     """
     Visualize multiple experiments on the same plot in MP4 format.
     """
-    run_names = ["2025_03_23_16_05_33.pkl",
-                 "2025_03_23_16_11_55.pkl",
-                 "2025_03_23_16_12_13.pkl"]
+    run_names = ["2025_03_26_16_44_40.pkl",
+                 "2025_03_26_16_44_58.pkl",
+                 "2025_03_26_16_45_17.pkl"]
     pkl_ls = []
     for pkl in run_names:
         with open(os.getcwd() + "/saved_runs/" + pkl, "rb") as f:
