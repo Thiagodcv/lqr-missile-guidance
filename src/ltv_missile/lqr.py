@@ -4,7 +4,7 @@ from scipy.integrate import solve_ivp
 from scipy.interpolate import interp1d
 
 
-def A_nom(t, fe, th):
+def A_nom(t, fe, th, bc):
     """
     The time-varying A(t) matrix for the linearized model.
 
@@ -16,23 +16,37 @@ def A_nom(t, fe, th):
         The thrust exerted by the missile under the nominal trajectory.
     th: float
         The pitch angle of the missile under the nominal trajectory.
+    bc : Dict
+        The dictionary containing boundary conditions for the nominal trajectory. Contains keys-values
+        'x_dot0' : x velocity at time 0.
+        'z_dot0' : z velocity at time 0.
+        'm0': mass at time 0.
 
     Returns:
     -------
     ndarray
     """
-    m = const.MASS - const.ALPHA * fe * t
+    alpha = const.ALPHA
+    m0 = const.MASS if 'm0' not in bc else bc['m0']
+    m = const.MASS - alpha * fe * t
+    g = const.GRAVITY
+
+    c_x = -m0/(alpha * fe) * (bc['x_dot0'] + np.sin(th)/alpha)
+    c_z = -m0/(alpha * fe) * (bc['z_dot0'] + np.cos(th)/alpha - g*m0/(2*alpha*fe))
+    x_dot = -np.sin(th)/alpha - c_x*(alpha*fe)/(m0 - alpha*fe*t)
+    z_dot = -np.cos(th)/alpha + g/(2*alpha*fe)*(m0 - alpha*fe*t) - c_z*(alpha * fe)/(m0 - alpha*fe*t)
+
     A = np.array([[0., 1., 0., 0., 0., 0., 0.],
-                  [0., 0., 0., 0., fe/m*np.cos(th), 0., -(fe/m**2)*np.sin(th)],
+                  [0., alpha*fe/m, 0., 0., fe/m*np.cos(th), 0., -(fe/m**2)*(np.sin(th) + alpha*x_dot)],
                   [0., 0., 0., 1., 0., 0., 0.],
-                  [0., 0., 0., 0., -fe/m*np.sin(th), 0., -(fe/m**2)*np.cos(th)],
+                  [0., 0., 0., alpha*fe/m, -fe/m*np.sin(th), 0., -(fe/m**2)*(np.cos(th) + alpha*z_dot)],
                   [0., 0., 0., 0., 0., 1., 0.],
-                  [0., 0., 0., 0., 0., 0., 0.],
+                  [0., 0., 0., 0., 0., alpha*fe/m, 0.],
                   [0., 0., 0., 0., 0., 0., 0.]])
     return A
 
 
-def B_nom(t, fe, th):
+def B_nom(t, fe, th, bc):
     """
     The time-varying B(t) matrix for the linearized model.
 
@@ -44,6 +58,11 @@ def B_nom(t, fe, th):
         The thrust exerted by the missile under the nominal trajectory.
     th: float
         The pitch angle of the missile under the nominal trajectory.
+    bc : Dict
+        The dictionary containing boundary conditions for the nominal trajectory. Contains keys-values
+        'x_dot0' : x velocity at time 0.
+        'z_dot0' : z velocity at time 0.
+        'm0': mass at time 0.
 
     Returns:
     -------
@@ -53,20 +72,30 @@ def B_nom(t, fe, th):
     l2 = const.L2
     ln = const.Ln
     alpha = const.ALPHA
-    m = const.MASS - alpha * fe * t
-    J = ((l1+l2)**2 + const.DIAMETER**2)/12*m
+
+    m0 = const.MASS if 'm0' not in bc else bc['m0']
+    m = m0 - alpha*fe*t
+    g = const.GRAVITY
+
+    c = ((l1+l2)**2 + const.DIAMETER**2)/12
+    J = c*m
+
+    c_x = -m0/(alpha*fe) * (bc['x_dot0'] + np.sin(th)/alpha)
+    c_z = -m0/(alpha*fe) * (bc['z_dot0'] + np.cos(th)/alpha - g*m0/(2*alpha*fe))
+    x_dot = -np.sin(th)/alpha - c_x*(alpha*fe)/(m0 - alpha*fe*t)
+    z_dot = -np.cos(th)/alpha + g/(2*alpha*fe)*(m0 - alpha*fe*t) - c_z*(alpha*fe)/(m0 - alpha*fe*t)
 
     B = np.array([[0., 0., 0.],
-                  [1/m*np.sin(th), 1/m*np.cos(th), fe/m*np.cos(th)],
+                  [1/m*np.sin(th) + alpha/m*x_dot, 1/m*np.cos(th), fe/m*np.cos(th)],
                   [0., 0., 0.],
-                  [1/m*np.cos(th), -1/m*np.sin(th), -fe/m*np.sin(th)],
+                  [1/m*np.cos(th) + alpha/m*z_dot, -1/m*np.sin(th), -fe/m*np.sin(th)],
                   [0., 0., 0.],
                   [0., l2/J, -fe/J*(l1+ln)],
                   [-alpha, 0., 0.]])
     return B
 
 
-def F(t, S_flat, Q, R, fe, th):
+def F(t, S_flat, Q, R, fe, th, bc):
     """
     The time-derivative of the S matrix according to its differential Riccati equation.
 
@@ -84,13 +113,15 @@ def F(t, S_flat, Q, R, fe, th):
         The thrust exerted by the missile under the nominal trajectory.
     th: float
         The pitch angle of the missile under the nominal trajectory.
+    bc: Dict
+        Definition given in A_nom() function.
 
     Returns:
     -------
     ndarray
     """
-    A = A_nom(t, fe, th)
-    B = B_nom(t, fe, th)
+    A = A_nom(t, fe, th, bc)
+    B = B_nom(t, fe, th, bc)
     S = S_flat.reshape(A.shape)
     R_inv = np.linalg.inv(R)  # Assuming R is diagonal
 
@@ -98,7 +129,7 @@ def F(t, S_flat, Q, R, fe, th):
     return dS.flatten()
 
 
-def diff_riccati_eq(Q, Qf, R, fe, th, T_final):
+def diff_riccati_eq(Q, Qf, R, fe, th, T_final, bc):
     """
     Solve the Differential Riccati Equation and get S(t) evaluated at discrete points.
 
@@ -116,6 +147,8 @@ def diff_riccati_eq(Q, Qf, R, fe, th, T_final):
         The pitch angle of the missile under the nominal trajectory.
     T_final: float
         The final time; we solve for S(t) for t in [0, T_final].
+    bc: Dict
+        Definition given in A_nom() function.
 
     Returns:
     -------
@@ -125,11 +158,11 @@ def diff_riccati_eq(Q, Qf, R, fe, th, T_final):
     S_final = Qf.flatten()
 
     T_init = 0
-    sol = solve_ivp(F, [T_final, T_init], S_final, args=(Q, R, fe, th))
+    sol = solve_ivp(F, [T_final, T_init], S_final, args=(Q, R, fe, th, bc))
     return sol
 
 
-def get_S_interp(Q, Qf, R, fe, th, T_final):
+def get_S_interp(Q, Qf, R, fe, th, T_final, bc):
     """
     Solve the Differential Riccati Equation and approximate S(t) using cubic splines.
 
@@ -147,13 +180,15 @@ def get_S_interp(Q, Qf, R, fe, th, T_final):
         The pitch angle of the missile under the nominal trajectory.
     T_final: float
         The final time; we solve for S(t) for t in [0, T_final].
+    bc: Dict
+        Definition given in A_nom() function.
 
     Returns:
     -------
     2D list of scipy.interpolate.interp1d objects
     """
     # Get S(t) evaluated at finitely-many points in [0, T_final] via differential riccati equation
-    sol = diff_riccati_eq(Q, Qf, R, fe, th, T_final)
+    sol = diff_riccati_eq(Q, Qf, R, fe, th, T_final, bc)
     S_seq_inv = sol.y.T.reshape(-1, *Q.shape)
 
     # Put S(t) and t in correct order
