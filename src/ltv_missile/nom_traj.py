@@ -80,6 +80,7 @@ def func(fe, th, bc):
 
 def jac(fe, th, bc):
     """
+    TODO: Double check to see if working as expected.
     The Jacobian of the function used for root-finding in nom_traj_params().
 
     Parameters:
@@ -97,32 +98,43 @@ def jac(fe, th, bc):
     """
     m0 = const.MASS
     alpha = const.ALPHA
+    g = const.GRAVITY
     T = bc['T']
 
-    # derivatives of cx
-    dcx_dfe = 0
-    dcx_dtheta = 1/alpha * np.log(m0) * np.cos(th)
+    # Coefficients
+    c_x = -m0 / (alpha * fe) * (bc['x_dot0'] + np.sin(th) / alpha)
+    d_x = bc['x0'] - m0 * np.sin(th) / (alpha ** 2 * fe) - c_x * np.log(m0)
+    c_z = -m0 / (alpha * fe) * (bc['z_dot0'] + np.cos(th) / alpha - g * m0 / (2 * alpha * fe))
+    d_z = bc['z0'] - m0 * np.cos(th) / (alpha ** 2 * fe) + g * m0 ** 2 / (4 * alpha ** 2 * fe ** 2) - c_z * np.log(m0)
 
-    # derivatives of dx
-    ddx_dfe = m0/(alpha**2 * fe**2) * np.log(m0) * np.sin(th)
-    ddx_dtheta = -m0/(fe * alpha**2) * np.log(m0) * np.cos(th)
+    # Derivatives of cx
+    dcx_dfe = m0/(alpha * fe**2)*(bc['x_dot0'] + np.sin(th)/alpha)
+    dcx_dtheta = -m0*np.cos(th)/(alpha**2 * fe)
 
-    # derivatives of cz
-    dcz_dfe = 0
-    dcz_dtheta = -1/alpha * np.log(m0) * np.sin(th)
+    # Derivatives of dx
+    ddx_dfe = m0*np.sin(th)/(alpha**2 * fe**2) - dcx_dfe*np.log(m0)
+    ddx_dtheta = -m0*np.cos(th)/(alpha**2 * fe) - dcx_dtheta*np.log(m0)
 
-    # derivatives of dz
-    ddz_dfe = m0/(alpha**2 * fe**2) * np.log(m0) * np.cos(th)
-    ddz_dtheta = m0/(alpha**2 * fe) * np.log(m0) * np.sin(th)
+    # Derivatives of cz
+    dcz_dfe = (m0/(alpha * fe**2)*(bc['z_dot0'] + np.cos(th)/alpha - g*m0/(2*alpha*fe)) -
+               m0/(alpha*fe)*(g*m0/(2*alpha*fe**2)))
+    dcz_dtheta = m0*np.sin(th)/(alpha**2 * fe)
 
-    prod_rule_fe = m0/(alpha*fe**2)*np.log(m0 - alpha*fe*T) - (T - m0/(alpha*fe))*(alpha*T)/(m0 - alpha*fe*T)
-    prod_rule_th = (T - m0/(alpha*fe))*np.log(m0 - alpha*fe*T)
+    # Derivatives of dz
+    ddz_dfe = m0*np.cos(th)/(alpha**2 * fe**2) - g*m0**2/(2*alpha**2 * fe**3) - dcz_dfe*np.log(m0)
+    ddz_dtheta = m0*np.sin(th)/(alpha**2 * fe) - dcz_dtheta*np.log(m0)
 
-    dgx_dfe = -(1/alpha)*np.sin(th)*prod_rule_fe + ddx_dfe
-    dgz_dfe = -(1/alpha)*np.cos(th)*prod_rule_fe + ddz_dfe
+    # Compute Jacobian
+    dgx_dfe = (-np.sin(th)/(alpha**2 * fe**2)*(m0 - alpha*fe*T) + np.sin(th)/(alpha**2 * fe)*(-alpha*T) +
+               dcx_dfe * np.log(m0 - alpha*fe*T) + c_x*(-alpha*T)/(m0-alpha*fe*T) + ddx_dfe)
 
-    dgx_dth = -(1/alpha)*np.cos(th)*prod_rule_th + T/alpha*np.cos(th) + dcx_dtheta*T + ddx_dtheta
-    dgz_dth = 1/alpha*np.sin(th)*prod_rule_th - T/alpha*np.sin(th) + dcz_dtheta*T + ddz_dtheta
+    dgz_dfe1 = -np.cos(th)/(alpha**2 * fe**2)*(m0 - alpha*fe*T) + np.cos(th)/(alpha**2 * fe)*(-alpha*T)
+    dgz_dfe2 = g/(2*alpha**2 * fe**3)*(m0 - alpha*fe*T)**2 - g/(2*alpha**2 * fe**2)*(m0 - alpha*fe*T)*(-alpha*T)
+    dgz_dfe3 = dcz_dfe*np.log(m0 - alpha*fe*T) + c_z*(-alpha*T)/(m0 - alpha*fe*T) + ddz_dfe
+    dgz_dfe = dgz_dfe1 + dgz_dfe2 + dgz_dfe3
+
+    dgx_dth = np.cos(th)/(alpha**2 * fe)*(m0 - alpha*fe*T) + dcx_dtheta*np.log(m0 - alpha*fe*T) + ddx_dtheta
+    dgz_dth = -np.sin(th)/(alpha**2 * fe)*(m0 - alpha*fe*T) + dcz_dtheta*np.log(m0 - alpha*fe*T) + ddz_dtheta
 
     return np.array([[dgx_dfe, dgx_dth],
                      [dgz_dfe, dgz_dth]])
