@@ -256,18 +256,18 @@ def min_time_nom_moving_targ(bc, bc_targ, fe_max, init_guess=None):
 
     def x_hit_constraint(var):
         fe, th, T = var
-        c_x = bc['x_dot0'] + (1 / alpha) * np.log(m0) * np.sin(th)
-        d_x = bc['x0'] - m0 / (alpha ** 2 * fe) * np.log(m0) * np.sin(th)
-        constr = (-(1/alpha) * np.sin(th) * (T - m0/(alpha*fe)) * np.log(m0 - alpha*fe*T) + T/alpha*np.sin(th) +
-                  c_x*T + d_x - x_targ_pos(T))
+        c_x = -m0/(alpha*fe) * (bc['x_dot0'] + np.sin(th)/alpha)
+        d_x = bc['x0'] - m0*np.sin(th)/(alpha**2 * fe) - c_x * np.log(m0)
+        constr = np.sin(th)/(alpha**2 * fe) * (m0 - alpha*fe*T) + c_x * np.log(m0 - alpha*fe*T) + d_x - x_targ_pos(T)
         return constr
 
     def z_hit_constraint(var):
         fe, th, T = var
-        c_z = bc['z_dot0'] + (1 / alpha) * np.log(m0) * np.cos(th)
-        d_z = bc['z0'] - m0 / (alpha ** 2 * fe) * np.log(m0) * np.cos(th)
-        constr = (-(1/alpha) * np.cos(th) * (T - m0/(alpha*fe)) * np.log(m0 - alpha*fe*T) + T/alpha*np.cos(th) -
-                  (1/2)*g*T**2 + c_z*T + d_z - z_targ_pos(T))
+        c_z = -m0/(alpha*fe) * (bc['z_dot0'] + np.cos(th)/alpha - g*m0/(2*alpha*fe))
+        d_z = (bc['z0'] - m0*np.cos(th)/(alpha**2 * fe) + g*m0**2/(4*alpha**2 * fe**2) -
+               c_z*np.log(m0))
+        constr = (np.cos(th)/(alpha**2 * fe) * (m0 - alpha*fe*T) - g/(4*alpha**2 * fe**2) * (m0 - alpha*fe*T)**2 +
+                  c_z*np.log(m0 - alpha*fe*T) + d_z - z_targ_pos(T))
         return constr
 
     def fuel_constraint(var):
