@@ -23,7 +23,8 @@ class TestLTVNomTraj(TestCase):
               'z_dot0': 0.,
               'T': 3.,
               'xT': 100.,  # travel 1400m in one second
-              'zT': 100.}
+              'zT': 100.,
+              'm0': 100}
 
         fe = 100
         th = np.pi/4
