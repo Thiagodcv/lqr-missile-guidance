@@ -307,16 +307,17 @@ def nom_state(t, fe, th, bc):
     g = const.GRAVITY
     alpha = const.ALPHA
 
-    c_x = bc['x_dot0'] + (1 / alpha) * np.log(m0) * np.sin(th)
-    d_x = bc['x0'] - m0 / (alpha ** 2 * fe) * np.log(m0) * np.sin(th)
-    c_z = bc['z_dot0'] + (1 / alpha) * np.log(m0) * np.cos(th)
-    d_z = bc['z0'] - m0 / (alpha ** 2 * fe) * np.log(m0) * np.cos(th)
+    c_x = -m0 / (alpha * fe) * (bc['x_dot0'] + np.sin(th) / alpha)
+    d_x = bc['x0'] - m0 * np.sin(th) / (alpha ** 2 * fe) - c_x * np.log(m0)
+    c_z = -m0 / (alpha * fe) * (bc['z_dot0'] + np.cos(th) / alpha - g * m0 / (2 * alpha * fe))
+    d_z = bc['z0'] - m0 * np.cos(th) / (alpha ** 2 * fe) + g * m0 ** 2 / (4 * alpha ** 2 * fe ** 2) - c_z * np.log(m0)
 
-    x = -(1/alpha)*np.sin(th)*(t - m0/(alpha * fe))*np.log(m0 - alpha*fe*t) + t/alpha*np.sin(th) + c_x*t + d_x
-    z = -(1/alpha)*np.cos(th)*(t - m0/(alpha * fe))*np.log(m0 - alpha*fe*t) + t/alpha*np.cos(th) - (1/2)*g*t** 2 + c_z*t + d_z
+    x = np.sin(th)/(alpha**2 * fe)*(m0 - alpha*fe*t) + c_x*np.log(m0 - alpha*fe*t) + d_x
+    z = (np.cos(th)/(alpha**2 * fe)*(m0 - alpha*fe*t) - g/(4*alpha**2 * fe**2)*(m0 - alpha*fe*t)**2 +
+         c_z*np.log(m0 - alpha*fe*t) + d_z)
 
-    x_dot = -(1/alpha)*np.log(m0 - alpha*fe*t)*np.sin(th) + c_x
-    z_dot = -(1/alpha)*np.log(m0 - alpha*fe*t)*np.cos(th) - g*t + c_z
+    x_dot = -np.sin(th)/alpha - c_x*(alpha*fe)/(m0 - alpha*fe*t)
+    z_dot = -np.cos(th)/alpha + g/(2*alpha*fe)*(m0 - alpha*fe*t) - c_z*(alpha*fe)/(m0 - alpha*fe*t)
 
     th_dot = 0
     m = m0 - alpha*fe*t
