@@ -51,7 +51,7 @@ def experiment():
     # Plot results
     nom_state_seq = np.array([nom_state(t, fe_nom, th_nom, bc) for t in t_span])
     true_input_seq = np.array([nom_input for t in t_span])
-    plot_dynamics(t_span, sol, nom_state_seq, true_input_seq, fe_nom, fe_lim=[4600, 4750])
+    plot_dynamics(t_span, sol, nom_state_seq, true_input_seq, fe_nom, fe_lim=[4050, 4200])
 
 
 if __name__ == '__main__':
