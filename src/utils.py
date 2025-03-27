@@ -15,21 +15,21 @@ def plot_dynamics(t_seq, sol, nom_state_seq, true_input_seq, fe_nom,
     x_ax.plot(t_seq, sol[:, 0])
     x_ax.plot(t_seq, nom_state_seq[:, 0])
     # x_ax.legend()
-    x_ax.set_ylabel("x(t)")
+    x_ax.set_ylabel("x")
 
     # z coordinate
     z_ax = axes[1]
     z_ax.plot(t_seq, sol[:, 2])
     z_ax.plot(t_seq, nom_state_seq[:, 2])
     # z_ax.legend()
-    z_ax.set_ylabel("z(t)")
+    z_ax.set_ylabel("z")
 
     # theta angle
     th_ax = axes[2]
     th_ax.plot(t_seq, sol[:, 4])
     th_ax.plot(t_seq, nom_state_seq[:, 4])
     # th_ax.legend()
-    th_ax.set_ylabel("theta(t)")
+    th_ax.set_ylabel("theta")
 
     k = 3 if include_mass else 2
     if include_mass:
@@ -38,7 +38,7 @@ def plot_dynamics(t_seq, sol, nom_state_seq, true_input_seq, fe_nom,
         m_ax.plot(t_seq, sol[:, 6])
         m_ax.plot(t_seq, nom_state_seq[:, 6])
         # m_ax.legend()
-        m_ax.set_ylabel("m(t)")
+        m_ax.set_ylabel("m")
 
     # trust fe
     fe_ax = axes[k+1]
@@ -47,21 +47,21 @@ def plot_dynamics(t_seq, sol, nom_state_seq, true_input_seq, fe_nom,
     if fe_lim is not None:
         fe_ax.set_ylim(fe_lim[0], fe_lim[1])
     # fe_ax.legend()
-    fe_ax.set_ylabel("fe(t)")
+    fe_ax.set_ylabel("F_E")
 
     # side thrust fs
     fs_ax = axes[k+2]
     fs_ax.plot(t_seq, true_input_seq[:, 1])
     fs_ax.plot(t_seq, np.zeros(len(t_seq)))
     # fs_ax.legend()
-    fs_ax.set_ylabel("fs(t)")
+    fs_ax.set_ylabel("F_S")
 
     # nozzle angle
     phi_ax = axes[k+3]
     phi_ax.plot(t_seq, true_input_seq[:, 2])
     phi_ax.plot(t_seq, np.zeros(len(t_seq)))
     # phi_ax.legend()
-    phi_ax.set_ylabel("phi(t)")
+    phi_ax.set_ylabel("phi")
 
     axes[-1].set_xlabel("Time t")
     plt.tight_layout()
