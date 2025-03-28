@@ -12,9 +12,9 @@ def plot_dynamics(t_seq, sol, nom_state_seq, true_input_seq, fe_nom,
 
     # x coordinate
     x_ax = axes[0]
-    x_ax.plot(t_seq, sol[:, 0])
-    x_ax.plot(t_seq, nom_state_seq[:, 0])
-    # x_ax.legend()
+    x_ax.plot(t_seq, sol[:, 0], label="True Trajectory")
+    x_ax.plot(t_seq, nom_state_seq[:, 0], label="Nominal Trajectory")
+    x_ax.legend()
     x_ax.set_ylabel("x")
 
     # z coordinate
