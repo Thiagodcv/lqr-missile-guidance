@@ -56,12 +56,26 @@ class TestLTVLQR(TestCase):
         Test diff_riccati_eq function to ensure no crashing.
         """
         Q = np.identity(7)
-        Qf = np.identity(7)
+        Q[0, 0] = 4.
+        Q[1, 1] = 0.04
+        Q[2, 2] = 4.
+        Q[3, 3] = 0.04
+        Q[4, 4] = 2500.
+        Q[5, 5] = 25.
+        Q[6, 6] = 0.
+
         R = np.identity(3)
-        fe = 60
+        R[0, 0] = 0.04
+        R[1, 1] = 100.
+        R[2, 2] = 2500.
+
+        Qf = Q
+
+        fe = 4500
         th = np.pi/4
-        bc = {'x_dot0': 1000., 'z_dot0': 1000., 'm0': 70.}
-        sol = diff_riccati_eq(Q, Qf, R, fe, th, T_final=3., bc=bc)
+        T_final = 30.
+        bc = {'x_dot0': 0., 'z_dot0': 0., 'm0': constants.MASS}
+        sol = diff_riccati_eq(Q, Qf, R, fe, th, T_final=T_final, bc=bc)
         S_seq_inv = sol.y.T.reshape(-1, *Q.shape)
         # print(sol.t)
         # print(S_seq[-1, :, :])  # Last index corresponds to t=0
@@ -81,7 +95,7 @@ class TestLTVLQR(TestCase):
                                    kind='cubic', fill_value='extrapolate') for j in range(n)] for i in range(n)]
 
         # GRAPH S(t)
-        t_seq_even = np.arange(0., 3., 0.01)  # Evenly spaced time steps
+        t_seq_even = np.arange(0., T_final, 0.1)  # Evenly spaced time steps
         fig, axes = plt.subplots(n, n, figsize=(3 * n, 3 * n))
         for i in range(n):
             for j in range(n):
