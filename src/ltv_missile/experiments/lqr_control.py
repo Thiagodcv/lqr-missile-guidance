@@ -17,6 +17,7 @@ def experiment():
           'x_dot0': 0,
           'z0': 0,
           'z_dot0': 0,
+          'm0': const.MASS,
           'T': 30,
           'xT': 20_000,
           'zT': 10_000}
@@ -46,12 +47,12 @@ def experiment():
     n = Q.shape[0]
 
     # Get S matrix estimate based on cubic splines
-    S_interp = get_S_interp(Q, Q, R, fe_nom, th_nom, bc['T'])
+    S_interp = get_S_interp(Q, Q, R, fe_nom, th_nom, bc['T'], bc)
 
     # Define functions needed for SDE simulation
     def opt_u(x, t):
         # Compute LQR control input
-        K = R_inv @ B_nom(t, fe_nom, th_nom).T @ S(t, S_interp, n)
+        K = R_inv @ B_nom(t, fe_nom, th_nom, bc).T @ S(t, S_interp, n)
         dx = x - nom_state(t, fe_nom, th_nom, bc)
         u = -K @ dx + nom_input
         return u
@@ -80,7 +81,7 @@ def experiment():
     x_seq = [sol[t, :] for t in range(sol.shape[0])]
     nom_state_seq = np.array([nom_state(t, fe_nom, th_nom, bc) for t in t_span])
     true_input_seq = np.array([opt_u(x, t) for x, t in zip(x_seq, t_span)])
-    plot_dynamics(t_span, sol, nom_state_seq, true_input_seq, fe_nom, fe_lim=[4600, 4750])
+    plot_dynamics(t_span, sol, nom_state_seq, true_input_seq, fe_nom, fe_lim=[4075, 4225])
 
 
 if __name__ == '__main__':

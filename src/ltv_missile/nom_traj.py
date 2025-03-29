@@ -15,6 +15,7 @@ def nom_traj_params(bc):
         'x_dot0' : x velocity at time 0.
         'z0' : z position at time 0.
         'z_dot0' : z velocity at time 0.
+        'm0': mass at time 0.
         'T' : Amount of time until target reached.
         'xT' : x position at time T.
         'zT' : z position at time T.
@@ -56,27 +57,31 @@ def func(fe, th, bc):
     -------
     ndarray
     """
-    m0 = const.MASS
+    m0 = const.MASS if 'm0' not in bc else bc['m0']
     g = const.GRAVITY
     alpha = const.ALPHA
 
-    c_x = bc['x_dot0'] + (1/alpha)*np.log(m0)*np.sin(th)
-    d_x = bc['x0'] - m0/(alpha**2 * fe)*np.log(m0)*np.sin(th)
-    c_z = bc['z_dot0'] + (1/alpha)*np.log(m0)*np.cos(th)
-    d_z = bc['z0'] - m0/(alpha**2 * fe)*np.log(m0)*np.cos(th)
+    c_x = -m0/(alpha*fe)*(bc['x_dot0'] + np.sin(th)/alpha)
+    d_x = bc['x0'] - m0*np.sin(th)/(alpha**2 * fe) - c_x*np.log(m0)
+    c_z = -m0/(alpha*fe)*(bc['z_dot0'] + np.cos(th)/alpha - g*m0/(2*alpha*fe))
+    d_z = bc['z0'] - m0*np.cos(th)/(alpha**2 * fe) + g*m0**2/(4*alpha**2 * fe**2) - c_z*np.log(m0)
     xT = bc['xT']
     zT = bc['zT']
     T = bc['T']
 
     # print("mT: ", m0 - alpha*fe*T)
-    gx = -(1/alpha)*np.sin(th)*(T-m0/(alpha*fe))*np.log(m0 - alpha*fe*T) + T/alpha*np.sin(th) + c_x*T + d_x - xT
-    gz = (-(1/alpha)*np.cos(th)*(T-m0/(alpha*fe))*np.log(m0 - alpha*fe*T) + T/alpha*np.cos(th) - (1/2)*g*T**2
-          + c_z*T + d_z - zT)
+    # gx = -(1/alpha)*np.sin(th)*(T-m0/(alpha*fe))*np.log(m0 - alpha*fe*T) + T/alpha*np.sin(th) + c_x*T + d_x - xT
+    # gz = (-(1/alpha)*np.cos(th)*(T-m0/(alpha*fe))*np.log(m0 - alpha*fe*T) + T/alpha*np.cos(th) - (1/2)*g*T**2
+    #       + c_z*T + d_z - zT)
+    gx = np.sin(th)/(alpha**2 * fe)*(m0 - alpha*fe*T) + c_x*np.log(m0 - alpha*fe*T) + d_x - xT
+    gz = (np.cos(th)/(alpha**2 * fe)*(m0 - alpha*fe*T) - g/(4*alpha**2 * fe**2)*(m0 - alpha*fe*T)**2 +
+          c_z*np.log(m0 - alpha*fe*T) + d_z - zT)
     return np.array([gx, gz])
 
 
 def jac(fe, th, bc):
     """
+    TODO: Double check to see if working as expected.
     The Jacobian of the function used for root-finding in nom_traj_params().
 
     Parameters:
@@ -92,34 +97,45 @@ def jac(fe, th, bc):
     -------
     ndarray
     """
-    m0 = const.MASS
+    m0 = const.MASS if 'm0' not in bc else bc['m0']
     alpha = const.ALPHA
+    g = const.GRAVITY
     T = bc['T']
 
-    # derivatives of cx
-    dcx_dfe = 0
-    dcx_dtheta = 1/alpha * np.log(m0) * np.cos(th)
+    # Coefficients
+    c_x = -m0 / (alpha * fe) * (bc['x_dot0'] + np.sin(th) / alpha)
+    d_x = bc['x0'] - m0 * np.sin(th) / (alpha ** 2 * fe) - c_x * np.log(m0)
+    c_z = -m0 / (alpha * fe) * (bc['z_dot0'] + np.cos(th) / alpha - g * m0 / (2 * alpha * fe))
+    d_z = bc['z0'] - m0 * np.cos(th) / (alpha ** 2 * fe) + g * m0 ** 2 / (4 * alpha ** 2 * fe ** 2) - c_z * np.log(m0)
 
-    # derivatives of dx
-    ddx_dfe = m0/(alpha**2 * fe**2) * np.log(m0) * np.sin(th)
-    ddx_dtheta = -m0/(fe * alpha**2) * np.log(m0) * np.cos(th)
+    # Derivatives of cx
+    dcx_dfe = m0/(alpha * fe**2)*(bc['x_dot0'] + np.sin(th)/alpha)
+    dcx_dtheta = -m0*np.cos(th)/(alpha**2 * fe)
 
-    # derivatives of cz
-    dcz_dfe = 0
-    dcz_dtheta = -1/alpha * np.log(m0) * np.sin(th)
+    # Derivatives of dx
+    ddx_dfe = m0*np.sin(th)/(alpha**2 * fe**2) - dcx_dfe*np.log(m0)
+    ddx_dtheta = -m0*np.cos(th)/(alpha**2 * fe) - dcx_dtheta*np.log(m0)
 
-    # derivatives of dz
-    ddz_dfe = m0/(alpha**2 * fe**2) * np.log(m0) * np.cos(th)
-    ddz_dtheta = m0/(alpha**2 * fe) * np.log(m0) * np.sin(th)
+    # Derivatives of cz
+    dcz_dfe = (m0/(alpha * fe**2)*(bc['z_dot0'] + np.cos(th)/alpha - g*m0/(2*alpha*fe)) -
+               m0/(alpha*fe)*(g*m0/(2*alpha*fe**2)))
+    dcz_dtheta = m0*np.sin(th)/(alpha**2 * fe)
 
-    prod_rule_fe = m0/(alpha*fe**2)*np.log(m0 - alpha*fe*T) - (T - m0/(alpha*fe))*(alpha*T)/(m0 - alpha*fe*T)
-    prod_rule_th = (T - m0/(alpha*fe))*np.log(m0 - alpha*fe*T)
+    # Derivatives of dz
+    ddz_dfe = m0*np.cos(th)/(alpha**2 * fe**2) - g*m0**2/(2*alpha**2 * fe**3) - dcz_dfe*np.log(m0)
+    ddz_dtheta = m0*np.sin(th)/(alpha**2 * fe) - dcz_dtheta*np.log(m0)
 
-    dgx_dfe = -(1/alpha)*np.sin(th)*prod_rule_fe + ddx_dfe
-    dgz_dfe = -(1/alpha)*np.cos(th)*prod_rule_fe + ddz_dfe
+    # Compute Jacobian
+    dgx_dfe = (-np.sin(th)/(alpha**2 * fe**2)*(m0 - alpha*fe*T) + np.sin(th)/(alpha**2 * fe)*(-alpha*T) +
+               dcx_dfe * np.log(m0 - alpha*fe*T) + c_x*(-alpha*T)/(m0-alpha*fe*T) + ddx_dfe)
 
-    dgx_dth = -(1/alpha)*np.cos(th)*prod_rule_th + T/alpha*np.cos(th) + dcx_dtheta*T + ddx_dtheta
-    dgz_dth = 1/alpha*np.sin(th)*prod_rule_th - T/alpha*np.sin(th) + dcz_dtheta*T + ddz_dtheta
+    dgz_dfe1 = -np.cos(th)/(alpha**2 * fe**2)*(m0 - alpha*fe*T) + np.cos(th)/(alpha**2 * fe)*(-alpha*T)
+    dgz_dfe2 = g/(2*alpha**2 * fe**3)*(m0 - alpha*fe*T)**2 - g/(2*alpha**2 * fe**2)*(m0 - alpha*fe*T)*(-alpha*T)
+    dgz_dfe3 = dcz_dfe*np.log(m0 - alpha*fe*T) + c_z*(-alpha*T)/(m0 - alpha*fe*T) + ddz_dfe
+    dgz_dfe = dgz_dfe1 + dgz_dfe2 + dgz_dfe3
+
+    dgx_dth = np.cos(th)/(alpha**2 * fe)*(m0 - alpha*fe*T) + dcx_dtheta*np.log(m0 - alpha*fe*T) + ddx_dtheta
+    dgz_dth = -np.sin(th)/(alpha**2 * fe)*(m0 - alpha*fe*T) + dcz_dtheta*np.log(m0 - alpha*fe*T) + ddz_dtheta
 
     return np.array([[dgx_dfe, dgx_dth],
                      [dgz_dfe, dgz_dth]])
@@ -138,6 +154,7 @@ def min_time_nom(bc, fe_max):
         'x_dot0' : x velocity at time 0.
         'z0' : z position at time 0.
         'z_dot0' : z velocity at time 0.
+        'm0': mass at time 0.
         'xT' : x position at time T.
         'zT' : z position at time T.
 
@@ -149,8 +166,8 @@ def min_time_nom(bc, fe_max):
     ndarray
         'fe', 'theta', and 'T' parameters of the nominal trajectory (T is the intercept time).
     """
-    m0 = const.MASS
-    m_fuel = const.MASS_FUEL
+    m0 = const.MASS if 'm0' not in bc else bc['m0']
+    m_fuel = m0 - const.MASS_DRY
     g = const.GRAVITY
     alpha = const.ALPHA
 
@@ -160,24 +177,25 @@ def min_time_nom(bc, fe_max):
 
     def x_hit_constraint(var):
         fe, th, T = var
-        c_x = bc['x_dot0'] + (1 / alpha) * np.log(m0) * np.sin(th)
-        d_x = bc['x0'] - m0 / (alpha ** 2 * fe) * np.log(m0) * np.sin(th)
+        c_x = -m0 / (alpha * fe) * (bc['x_dot0'] + np.sin(th) / alpha)
+        d_x = bc['x0'] - m0 * np.sin(th) / (alpha ** 2 * fe) - c_x * np.log(m0)
         xT = bc['xT']
-        constr = -(1/alpha)*np.sin(th)*(T-m0/(alpha*fe))*np.log(m0 - alpha*fe*T) + T/alpha*np.sin(th) + c_x*T + d_x - xT
+        constr = np.sin(th)/(alpha**2 * fe)*(m0 - alpha*fe*T) + c_x*np.log(m0 - alpha*fe*T) + d_x - xT
         return constr
 
     def z_hit_constraint(var):
         fe, th, T = var
-        c_z = bc['z_dot0'] + (1 / alpha) * np.log(m0) * np.cos(th)
-        d_z = bc['z0'] - m0 / (alpha ** 2 * fe) * np.log(m0) * np.cos(th)
+        c_z = -m0 / (alpha * fe) * (bc['z_dot0'] + np.cos(th) / alpha - g * m0 / (2 * alpha * fe))
+        d_z = (bc['z0'] - m0 * np.cos(th)/(alpha**2 * fe) + g*m0**2/(4*alpha**2 * fe**2) -
+               c_z*np.log(m0))
         zT = bc['zT']
-        constr = (-(1/alpha)*np.cos(th)*(T-m0/(alpha*fe))*np.log(m0 - alpha*fe*T) + T/alpha*np.cos(th) -
-                  (1/2)*g*T**2 + c_z*T + d_z - zT)
+        constr = (np.cos(th)/(alpha**2 * fe)*(m0 - alpha*fe*T) - g/(4*alpha**2 * fe**2)*(m0 - alpha*fe*T)**2 +
+                  c_z*np.log(m0 - alpha*fe*T) + d_z - zT)
         return constr
 
     def fuel_constraint(var):
         fe, th, T = var
-        return m_fuel/alpha - fe*T
+        return (1.0*m_fuel)/alpha - fe*T
 
     constraints = [{'type': 'eq', 'fun': lambda var: x_hit_constraint(var)},
                    {'type': 'eq', 'fun': lambda var: z_hit_constraint(var)},
@@ -201,6 +219,7 @@ def min_time_nom_moving_targ(bc, bc_targ, fe_max, init_guess=None):
         'x_dot0' : x velocity at time 0.
         'z0' : z position at time 0.
         'z_dot0' : z velocity at time 0.
+        'm0': mass at time 0.
 
     bc_targ : Dict
         A dictionary containing boundary conditions for the airborne target. Contains keys-values
@@ -217,8 +236,8 @@ def min_time_nom_moving_targ(bc, bc_targ, fe_max, init_guess=None):
     ndarray
         'Fe', 'theta', and 'T'.
     """
-    m0 = const.MASS
-    m_fuel = const.MASS_FUEL
+    m0 = const.MASS if 'm0' not in bc else bc['m0']
+    m_fuel = m0 - const.MASS_DRY
     g = const.GRAVITY
     alpha = const.ALPHA
 
@@ -240,23 +259,23 @@ def min_time_nom_moving_targ(bc, bc_targ, fe_max, init_guess=None):
 
     def x_hit_constraint(var):
         fe, th, T = var
-        c_x = bc['x_dot0'] + (1 / alpha) * np.log(m0) * np.sin(th)
-        d_x = bc['x0'] - m0 / (alpha ** 2 * fe) * np.log(m0) * np.sin(th)
-        constr = (-(1/alpha) * np.sin(th) * (T - m0/(alpha*fe)) * np.log(m0 - alpha*fe*T) + T/alpha*np.sin(th) +
-                  c_x*T + d_x - x_targ_pos(T))
+        c_x = -m0/(alpha*fe) * (bc['x_dot0'] + np.sin(th)/alpha)
+        d_x = bc['x0'] - m0*np.sin(th)/(alpha**2 * fe) - c_x * np.log(m0)
+        constr = np.sin(th)/(alpha**2 * fe) * (m0 - alpha*fe*T) + c_x * np.log(m0 - alpha*fe*T) + d_x - x_targ_pos(T)
         return constr
 
     def z_hit_constraint(var):
         fe, th, T = var
-        c_z = bc['z_dot0'] + (1 / alpha) * np.log(m0) * np.cos(th)
-        d_z = bc['z0'] - m0 / (alpha ** 2 * fe) * np.log(m0) * np.cos(th)
-        constr = (-(1/alpha) * np.cos(th) * (T - m0/(alpha*fe)) * np.log(m0 - alpha*fe*T) + T/alpha*np.cos(th) -
-                  (1/2)*g*T**2 + c_z*T + d_z - z_targ_pos(T))
+        c_z = -m0/(alpha*fe) * (bc['z_dot0'] + np.cos(th)/alpha - g*m0/(2*alpha*fe))
+        d_z = (bc['z0'] - m0*np.cos(th)/(alpha**2 * fe) + g*m0**2/(4*alpha**2 * fe**2) -
+               c_z*np.log(m0))
+        constr = (np.cos(th)/(alpha**2 * fe) * (m0 - alpha*fe*T) - g/(4*alpha**2 * fe**2) * (m0 - alpha*fe*T)**2 +
+                  c_z*np.log(m0 - alpha*fe*T) + d_z - z_targ_pos(T))
         return constr
 
     def fuel_constraint(var):
         fe, th, T = var
-        return m_fuel / alpha - fe * T
+        return (1.0*m_fuel)/alpha - fe*T
 
     constraints = [{'type': 'eq', 'fun': lambda var: x_hit_constraint(var)},
                    {'type': 'eq', 'fun': lambda var: z_hit_constraint(var)},
@@ -288,20 +307,21 @@ def nom_state(t, fe, th, bc):
     -------
     ndarray
     """
-    m0 = const.MASS
+    m0 = const.MASS if 'm0' not in bc else bc['m0']
     g = const.GRAVITY
     alpha = const.ALPHA
 
-    c_x = bc['x_dot0'] + (1 / alpha) * np.log(m0) * np.sin(th)
-    d_x = bc['x0'] - m0 / (alpha ** 2 * fe) * np.log(m0) * np.sin(th)
-    c_z = bc['z_dot0'] + (1 / alpha) * np.log(m0) * np.cos(th)
-    d_z = bc['z0'] - m0 / (alpha ** 2 * fe) * np.log(m0) * np.cos(th)
+    c_x = -m0 / (alpha * fe) * (bc['x_dot0'] + np.sin(th) / alpha)
+    d_x = bc['x0'] - m0 * np.sin(th) / (alpha ** 2 * fe) - c_x * np.log(m0)
+    c_z = -m0 / (alpha * fe) * (bc['z_dot0'] + np.cos(th) / alpha - g * m0 / (2 * alpha * fe))
+    d_z = bc['z0'] - m0 * np.cos(th) / (alpha ** 2 * fe) + g * m0 ** 2 / (4 * alpha ** 2 * fe ** 2) - c_z * np.log(m0)
 
-    x = -(1/alpha)*np.sin(th)*(t - m0/(alpha * fe))*np.log(m0 - alpha*fe*t) + t/alpha*np.sin(th) + c_x*t + d_x
-    z = -(1/alpha)*np.cos(th)*(t - m0/(alpha * fe))*np.log(m0 - alpha*fe*t) + t/alpha*np.cos(th) - (1/2)*g*t** 2 + c_z*t + d_z
+    x = np.sin(th)/(alpha**2 * fe)*(m0 - alpha*fe*t) + c_x*np.log(m0 - alpha*fe*t) + d_x
+    z = (np.cos(th)/(alpha**2 * fe)*(m0 - alpha*fe*t) - g/(4*alpha**2 * fe**2)*(m0 - alpha*fe*t)**2 +
+         c_z*np.log(m0 - alpha*fe*t) + d_z)
 
-    x_dot = -(1/alpha)*np.log(m0 - alpha*fe*t)*np.sin(th) + c_x
-    z_dot = -(1/alpha)*np.log(m0 - alpha*fe*t)*np.cos(th) - g*t + c_z
+    x_dot = -np.sin(th)/alpha - c_x*(alpha*fe)/(m0 - alpha*fe*t)
+    z_dot = -np.cos(th)/alpha + g/(2*alpha*fe)*(m0 - alpha*fe*t) - c_z*(alpha*fe)/(m0 - alpha*fe*t)
 
     th_dot = 0
     m = m0 - alpha*fe*t

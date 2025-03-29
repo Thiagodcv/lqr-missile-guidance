@@ -1,5 +1,6 @@
 MASS = 100.
 MASS_FUEL = 50.
+MASS_DRY = 50.
 GRAVITY = 9.8
 L1 = 1.5
 L2 = 1.5
