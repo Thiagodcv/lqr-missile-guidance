@@ -100,10 +100,10 @@ def export_multiple_to_mp4(pickle_data):
     ax.set_xlim(-5000, 12000)
     ax.set_ylim(-2000, 7500)
 
-    missile_traj_ls = [ax.plot([], [], lw=2, color="blue")[0] for _ in range(num_pairs)]
-    target_traj_ls = [ax.plot([], [], lw=2, color="orange")[0] for _ in range(num_pairs)]
-    missile_traj_ls[0] = ax.plot([], [], lw=2, color="blue", label="Missile")[0]
-    target_traj_ls[0] = ax.plot([], [], lw=2, color="orange", label="Target")[0]
+    missile_traj_ls = [ax.plot([], [], lw=1, color="blue")[0] for _ in range(num_pairs)]
+    target_traj_ls = [ax.plot([], [], lw=1, color="orange")[0] for _ in range(num_pairs)]
+    missile_traj_ls[0] = ax.plot([], [], lw=1, color="blue", label="Missile")[0]
+    target_traj_ls[0] = ax.plot([], [], lw=1, color="orange", label="Target")[0]
 
     def init():
         for ep in range(num_pairs):

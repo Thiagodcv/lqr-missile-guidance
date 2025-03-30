@@ -199,8 +199,8 @@ def export_to_mp4(missile_hist, targ_hist, episode_len, fps, run_name):
     ax.set_xlim(-5000, 12000)
     ax.set_ylim(-2000, 7500)
 
-    missile_traj, = ax.plot([], [], lw=2, label="Missile")
-    target_traj, = ax.plot([], [], lw=2, label="Target")
+    missile_traj, = ax.plot([], [], lw=1, label="Missile")
+    target_traj, = ax.plot([], [], lw=1, label="Target")
 
     def init():
         missile_traj.set_data([], [])
@@ -286,9 +286,9 @@ def export_past_runs():
     """
     Visualize multiple experiments on the same plot in MP4 format.
     """
-    run_names = ["2025_03_26_16_44_40.pkl",
-                 "2025_03_26_16_44_58.pkl",
-                 "2025_03_26_16_45_17.pkl"]
+    run_names = ["2025_03_26_16_44_58.pkl",
+                 "2025_03_26_16_45_17.pkl",
+                 "2025_03_26_16_45_58.pkl"]
     pkl_ls = []
     for pkl in run_names:
         with open(os.getcwd() + "/saved_runs/" + pkl, "rb") as f:
